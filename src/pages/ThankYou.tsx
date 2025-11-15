@@ -13,8 +13,8 @@ const ThankYou = () => {
   const [searchParams] = useSearchParams();
   
   // Récupération des paramètres URL
-  const name = searchParams.get("Nom") || "Utilisateur";
-  const id = searchParams.get("Submission ID") || "Inconnu";
+  const name = searchParams.get("name") || "Utilisateur";
+  const id = searchParams.get("id") || "Inconnu";
 
   // Vérification de la présence des paramètres requis
   const hasError = !name || !id;
