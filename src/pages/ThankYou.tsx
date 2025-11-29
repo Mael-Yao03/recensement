@@ -4,11 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import successIllustration from "@/assets/undraw_confirmed_c5lo.png";
 
-/**
- * Page de remerciement moderne et responsive
- * Récupère les paramètres 'name' et 'id' depuis l'URL
- * Affiche un message personnalisé ou une erreur si les paramètres sont manquants
- */
 const ThankYou = () => {
   const [searchParams] = useSearchParams();
   
@@ -64,16 +59,12 @@ const ThankYou = () => {
                 </Button>
               </div>
             ) : (
-              // État de succès - Affichage du message personnalisé
               <div className="text-center space-y-8">
-                {/* Message de remerciement personnalisé */}
                 <div className="space-y-4">
                   <div className="inline-block">
                     <h1 className="text-4xl sm:text-5xl font-bold text-primary">
                       Merci, {name} !
                     </h1>
-
-                    {/* Ligne simple REMPLACÉE (au lieu du dégradé) */}
                     <div className="h-1 w-full bg-primary rounded-full mt-2"></div>
                   </div>
                   
@@ -82,7 +73,6 @@ const ThankYou = () => {
                       Vos informations ont bien été enregistrées.
                     </p>
                     
-                    {/* Badge ID stylisé — dégradé supprimé */}
                     <div className="inline-flex items-center gap-2 bg-primary/10 px-6 py-3 rounded-full border-2 border-primary/20">
                       <span className="text-sm text-muted-foreground font-medium">Identifiant :</span>
                       <span className="font-bold text-xl text-primary">
