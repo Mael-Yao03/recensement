@@ -14,7 +14,7 @@ const ThankYou = () => {
     firstName: searchParams.get("firstName") || "N/A",
     registrationDate: new Date().toLocaleDateString(),
     id: searchParams.get("id") || "0000",
-    picture: searchParams.get("picture") || "",
+    picture: searchParams.get("picture") || "https://static.vecteezy.com/system/resources/thumbnails/027/842/188/small/user-ecommerce-icon-fill-style-png.png",
   };
 
   return (
