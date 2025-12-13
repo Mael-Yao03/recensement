@@ -14,7 +14,7 @@ const ThankYou = () => {
     firstName: searchParams.get("firstName") || "N/A",
     registrationDate: new Date().toLocaleDateString(),
     id: searchParams.get("id") || "0000",
-    picture: searchParams.get("picture") || "https://static.vecteezy.com/system/resources/thumbnails/027/842/188/small/user-ecommerce-icon-fill-style-png.png",
+    picture: searchParams.get("picture") || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${searchParams.get("name") || "Mael"}`,
   };
 
   return (
@@ -79,7 +79,7 @@ const ThankYou = () => {
 
                   <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                     {/* Photo */}
-                    <div className="w-32 h-40 bg-gray-200 rounded-xl flex items-center justify-center shrink-0">
+                    <div className="w-32 h-40 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
                       <img
                         src={data.picture}
                         alt="Photo du membre"
