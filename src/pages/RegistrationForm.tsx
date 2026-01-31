@@ -32,6 +32,7 @@ import {
   Step6SpiritualNeeds,
   Step7Health,
 } from "@/components/registration/form-steps"
+import FormHeader from "@/components/FormHeader"
 import Logo from "@/assets/trans.png"
 
 interface FormData {
@@ -230,31 +231,11 @@ export default function RegistrationForm() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-card border-b border-border shadow-sm">
-        <div className="container mx-auto px-4">
-          <div className="h-16 flex items-center justify-between">
-            <Link to="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
-                <img src={Logo} alt="Logo" className="w-8 h-8 object-contain" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="font-semibold text-foreground leading-tight">
-                  Temple La Transfiguration
-                </h1>
-                <p className="text-xs text-muted-foreground">Formulaire de recensement</p>
-              </div>
-            </Link>
-
-            {/* Progress indicator for mobile */}
-            <div className="sm:hidden flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">
-                {currentStep + 1}/{steps.length}
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <FormHeader 
+        currentStep={currentStep} 
+        totalSteps={steps.length} 
+        subtitle="Recensement des membres" 
+      />
 
       <main className="container mx-auto px-4 py-6 lg:py-10">
         <div className="max-w-4xl mx-auto">

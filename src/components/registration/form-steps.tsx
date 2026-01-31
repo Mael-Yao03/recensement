@@ -1,6 +1,9 @@
 "use client"
 
-import { Input, Radio, Checkbox, Select, Row, Col } from "antd"
+import { Input, Radio, Checkbox, Select, Row, Col, Upload, message } from "antd"
+import { CameraOutlined, UserOutlined } from "@ant-design/icons"
+import type { UploadProps } from "antd"
+import { useState } from "react"
 
 const { TextArea } = Input
 
@@ -11,6 +14,75 @@ interface FormData {
 interface StepProps {
   formData: FormData
   updateFormData: (field: string, value: string | string[]) => void
+}
+
+// Photo Upload Component
+function PhotoUpload({ formData, updateFormData }: StepProps) {
+  const [imageUrl, setImageUrl] = useState<string>(formData.photo as string || "")
+
+  const beforeUpload = (file: File) => {
+    const isJpgOrPng = file.type === "image/jpeg" || file.type === "image/png"
+    if (!isJpgOrPng) {
+      message.error("Vous pouvez uniquement télécharger des fichiers JPG/PNG!")
+      return false
+    }
+    const isLt2M = file.size / 1024 / 1024 < 2
+    if (!isLt2M) {
+      message.error("L'image doit être inférieure à 2MB!")
+      return false
+    }
+    return true
+  }
+
+  const handleChange: UploadProps["onChange"] = (info) => {
+    if (info.file.originFileObj) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        const base64 = reader.result as string
+        setImageUrl(base64)
+        updateFormData("photo", base64)
+      }
+      reader.readAsDataURL(info.file.originFileObj)
+    }
+  }
+
+  return (
+    <div className="flex flex-col items-center gap-4">
+      <label className="text-base font-medium block text-center">
+        Photo d'identité
+      </label>
+      <Upload
+        name="photo"
+        listType="picture-card"
+        className="avatar-uploader"
+        showUploadList={false}
+        beforeUpload={beforeUpload}
+        onChange={handleChange}
+        accept="image/png,image/jpeg"
+      >
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Photo"
+            className="w-full h-full object-cover rounded-lg"
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center p-4">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-2">
+              <UserOutlined className="text-2xl text-muted-foreground" />
+            </div>
+            <div className="flex items-center gap-2 text-primary">
+              <CameraOutlined />
+              <span className="text-sm">Ajouter une photo</span>
+            </div>
+          </div>
+        )}
+      </Upload>
+      <p className="text-xs text-muted-foreground text-center">
+        Format JPG ou PNG, max 2MB
+      </p>
+    </div>
+  )
 }
 
 const groupesDepartements = [
@@ -36,6 +108,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
       </div>
 
       <div className="grid gap-6">
+        {/* Photo d'identité */}
+        <div className="flex justify-center">
+          <PhotoUpload formData={formData} updateFormData={updateFormData} />
+        </div>
+
         <div className="space-y-2">
           <label className="text-base font-medium block">
             Nom et prénoms <span className="text-destructive">*</span>

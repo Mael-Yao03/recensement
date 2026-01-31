@@ -46,7 +46,7 @@ const Index = () => {
                   </Button>
 
                   <Button asChild size="sm" className="shadow-lg hover:shadow-xl transition-all group">
-                    <Link to="https://tally.so/r/obbj6O" target="_blank" className="inline-flex items-center gap-2">
+                    <Link to="/registration-children" className="inline-flex items-center gap-2">
                       Enregistrement Enfant
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>

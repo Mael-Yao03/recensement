@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 import RegistrationForm from "./pages/RegistrationForm";
+import ChildrenRegistrationForm from "./pages/ChildrenRegistrationForm";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/registration" element={<RegistrationForm />} />
+          <Route path="/registration-children" element={<ChildrenRegistrationForm />} />
           <Route path="/thankyou" element={<ThankYou />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
