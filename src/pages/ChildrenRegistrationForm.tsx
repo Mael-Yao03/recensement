@@ -1,16 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Steps, Button, Card, Progress } from "antd"
-import { ArrowLeftOutlined, ArrowRightOutlined, CheckOutlined, UserOutlined, TeamOutlined, HeartOutlined } from "@ant-design/icons"
+import { Steps, Button, Card, Progress, Spin } from "antd"
+import { ArrowLeftOutlined, ArrowRightOutlined, CheckOutlined, UserOutlined, TeamOutlined, HeartOutlined, LoadingOutlined } from "@ant-design/icons"
 import { ChildStep1GeneralInfo, ChildStep2Affiliation, ChildStep3SpiritualLife } from "@/components/registration/children-form-steps"
 import { useIsMobile } from "@/hooks/use-mobile"
 import FormHeader from "@/components/FormHeader"
-
-interface FormData {
-  [key: string]: string | string[] | undefined
-}
+import { useChildFormStore } from "@/stores"
+import { useCreateChild } from "@/hooks"
 
 const steps = [
   { title: "Infos générales", icon: <UserOutlined /> },
@@ -19,42 +17,75 @@ const steps = [
 ]
 
 export default function ChildrenRegistrationForm() {
-  const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState<FormData>({})
   const navigate = useNavigate()
   const isMobile = useIsMobile()
 
+  // Utilisation du store Zustand
+  const {
+    formData,
+    currentStep,
+    isSubmitted,
+    setFormData,
+    setCurrentStep,
+    nextStep,
+    prevStep,
+    getFormDataForSubmission,
+  } = useChildFormStore()
+  
+  // Mutation pour créer un enfant
+  const createChildMutation = useCreateChild()
+
   const updateFormData = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData({ [field]: value } as Partial<typeof formData>)
   }
 
-  const nextStep = () => {
+  const handleNextStep = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
+      nextStep()
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
-  const prevStep = () => {
+  const handlePrevStep = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      prevStep()
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
-  const handleSubmit = () => {
-    console.log("Children Form submitted:", formData)
-    navigate("/thankyou")
+  const handleSubmit = async () => {
+    try {
+      const payload = getFormDataForSubmission()
+      await createChildMutation.mutateAsync(payload as unknown as Parameters<typeof createChildMutation.mutateAsync>[0])
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error)
+    }
   }
+
+  // Rediriger vers la page de remerciement si soumis avec succès
+  useEffect(() => {
+    if (isSubmitted) {
+      navigate("/thank-you")
+    }
+  }, [isSubmitted, navigate])
+
+  // Convertir formData du store en format compatible avec les composants existants
+  const formDataForSteps: Record<string, string | string[] | undefined> = {}
+  Object.entries(formData).forEach(([key, value]) => {
+    formDataForSteps[key] = value as string | string[] | undefined
+  })
 
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <ChildStep1GeneralInfo formData={formData} updateFormData={updateFormData} />
+        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
       case 1:
-        return <ChildStep2Affiliation formData={formData} updateFormData={updateFormData} />
+        return <ChildStep2Affiliation formData={formDataForSteps} updateFormData={updateFormData} />
       case 2:
-        return <ChildStep3SpiritualLife formData={formData} updateFormData={updateFormData} />
+        return <ChildStep3SpiritualLife formData={formDataForSteps} updateFormData={updateFormData} />
       default:
-        return <ChildStep1GeneralInfo formData={formData} updateFormData={updateFormData} />
+        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
     }
   }
 
@@ -107,7 +138,7 @@ export default function ChildrenRegistrationForm() {
               <div className="flex flex-col-reverse sm:flex-row justify-between gap-4 mt-8 pt-6 border-t">
                 <Button
                   size="large"
-                  onClick={prevStep}
+                  onClick={handlePrevStep}
                   disabled={currentStep === 0}
                   icon={<ArrowLeftOutlined />}
                   className={currentStep === 0 ? "invisible" : ""}
@@ -120,16 +151,17 @@ export default function ChildrenRegistrationForm() {
                     type="primary"
                     size="large"
                     onClick={handleSubmit}
-                    icon={<CheckOutlined />}
+                    loading={createChildMutation.isPending}
+                    icon={createChildMutation.isPending ? <LoadingOutlined /> : <CheckOutlined />}
                     className="bg-green-600 hover:bg-green-700"
                   >
-                    Soumettre le formulaire
+                    {createChildMutation.isPending ? "Envoi en cours..." : "Soumettre le formulaire"}
                   </Button>
                 ) : (
                   <Button
                     type="primary"
                     size="large"
-                    onClick={nextStep}
+                    onClick={handleNextStep}
                   >
                     <span className="flex items-center gap-2">
                       Suivant <ArrowRightOutlined />

@@ -9,6 +9,16 @@ import NotFound from "./pages/NotFound";
 import RegistrationForm from "./pages/RegistrationForm";
 import ChildrenRegistrationForm from "./pages/ChildrenRegistrationForm";
 
+// Admin imports
+import { AdminLayout, ProtectedRoute } from "./components/admin";
+import {
+  AdminLogin,
+  AdminDashboard,
+  AdminUsers,
+  AdminRoles,
+  AdminMembers,
+} from "./pages/admin";
+
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -18,10 +28,56 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          {/* Routes publiques */}
           <Route path="/" element={<Index />} />
           <Route path="/registration" element={<RegistrationForm />} />
           <Route path="/registration-children" element={<ChildrenRegistrationForm />} />
           <Route path="/thankyou" element={<ThankYou />} />
+
+          {/* Routes Admin */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route
+              path="dashboard"
+              element={
+                <ProtectedRoute requiredPermissions={['view_dashboard']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="members"
+              element={
+                <ProtectedRoute requiredPermissions={['view_members', 'view_children']}>
+                  <AdminMembers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="users"
+              element={
+                <ProtectedRoute requiredPermissions={['view_users']}>
+                  <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="roles"
+              element={
+                <ProtectedRoute requiredPermissions={['view_roles']}>
+                  <AdminRoles />
+                </ProtectedRoute>
+              }
+            />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

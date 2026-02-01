@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Link } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
@@ -20,8 +20,8 @@ import {
   Shield,
   Info,
   ArrowRight,
-  Clock,
   FileText,
+  Loader2,
 } from "lucide-react"
 import {
   Step1GeneralInfo,
@@ -34,10 +34,8 @@ import {
 } from "@/components/registration/form-steps"
 import FormHeader from "@/components/FormHeader"
 import Logo from "@/assets/trans.png"
-
-interface FormData {
-  [key: string]: string | string[] | undefined
-}
+import { useMemberFormStore } from "@/stores"
+import { useCreateMember } from "@/hooks"
 
 const steps = [
   { id: 1, title: "Informations", icon: User, shortTitle: "Infos" },
@@ -51,40 +49,71 @@ const steps = [
 
 export default function RegistrationForm() {
   const [hasStarted, setHasStarted] = useState(false)
-  const [currentStep, setCurrentStep] = useState(0)
-  const [formData, setFormData] = useState<FormData>({})
-  const [isSubmitted, setIsSubmitted] = useState(false)
+  const navigate = useNavigate()
+  
+  // Utilisation du store Zustand
+  const {
+    formData,
+    currentStep,
+    isSubmitted,
+    setFormData,
+    setCurrentStep,
+    nextStep,
+    prevStep,
+    resetForm,
+    getFormDataForSubmission,
+  } = useMemberFormStore()
+  
+  // Mutation pour créer un membre
+  const createMemberMutation = useCreateMember()
 
   const updateFormData = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }))
+    setFormData({ [field]: value } as Partial<typeof formData>)
   }
 
   const progress = ((currentStep + 1) / steps.length) * 100
 
   const next = () => {
     if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1)
+      nextStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
   const prev = () => {
     if (currentStep > 0) {
-      setCurrentStep(currentStep - 1)
+      prevStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
-  const handleSubmit = () => {
-    console.log("Form submitted:", formData)
-    setIsSubmitted(true)
-    window.scrollTo({ top: 0, behavior: "smooth" })
+  const handleSubmit = async () => {
+    try {
+      const payload = getFormDataForSubmission()
+      await createMemberMutation.mutateAsync(payload as unknown as Parameters<typeof createMemberMutation.mutateAsync>[0])
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    } catch (error) {
+      console.error("Erreur lors de l'envoi:", error)
+    }
   }
 
   const startForm = () => {
     setHasStarted(true)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
+
+  // Rediriger vers la page de remerciement si soumis avec succès
+  useEffect(() => {
+    if (isSubmitted) {
+      navigate("/thank-you")
+    }
+  }, [isSubmitted, navigate])
+
+  // Convertir formData du store en format compatible avec les composants existants
+  const formDataForSteps: Record<string, string | string[] | undefined> = {}
+  Object.entries(formData).forEach(([key, value]) => {
+    formDataForSteps[key] = value as string | string[] | undefined
+  })
 
   // Welcome page
   if (!hasStarted) {
@@ -119,8 +148,7 @@ export default function RegistrationForm() {
                 Nouvel enregistrement
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {/* <Clock className="w-4 h-4" /> */}
-                  Durée estimée : 10-15 minutes
+                Durée estimée : 10-15 minutes
               </p>
             </div>
 
@@ -180,51 +208,6 @@ export default function RegistrationForm() {
             </div>
           </div>
         </main>
-      </div>
-    )
-  }
-
-  if (isSubmitted) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-12 max-w-2xl">
-          <Card className="border-0 shadow-xl">
-            <CardContent className="p-8 md:p-12 text-center">
-              <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Check className="w-10 h-10 text-green-600" />
-              </div>
-              <h1 className="text-3xl font-bold text-foreground mb-4">
-                Merci pour votre inscription !
-              </h1>
-              <p className="text-muted-foreground text-lg mb-8 leading-relaxed">
-                {"Cher(e) "}
-                <span className="font-semibold text-foreground">
-                  {formData.nomPrenoms || "bien-aimé(e)"}
-                </span>
-                {", recevez les sincères remerciements du Docteur Évangéliste Célestin ADOU et son Conseil. Vos avis comptent et nous vous remercions d'avoir apporté votre pierre à l'édifice."}
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  onClick={() => {
-                    setIsSubmitted(false)
-                    setHasStarted(false)
-                    setCurrentStep(0)
-                    setFormData({})
-                  }}
-                  variant="outline"
-                  className="h-12 px-8"
-                >
-                  Nouvelle inscription
-                </Button>
-                <Link to="/">
-                  <Button className="h-12 px-8 w-full sm:w-auto">
-                    Retour à l'accueil
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     )
   }
@@ -311,25 +294,25 @@ export default function RegistrationForm() {
           <Card className="border-0 shadow-xl">
             <CardContent className="p-6 md:p-8 lg:p-10">
               {currentStep === 0 && (
-                <Step1GeneralInfo formData={formData} updateFormData={updateFormData} />
+                <Step1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 1 && (
-                <Step2Family formData={formData} updateFormData={updateFormData} />
+                <Step2Family formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 2 && (
-                <Step3Spiritual formData={formData} updateFormData={updateFormData} />
+                <Step3Spiritual formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 3 && (
-                <Step4ChurchLife formData={formData} updateFormData={updateFormData} />
+                <Step4ChurchLife formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 4 && (
-                <Step5Professional formData={formData} updateFormData={updateFormData} />
+                <Step5Professional formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 5 && (
-                <Step6SpiritualNeeds formData={formData} updateFormData={updateFormData} />
+                <Step6SpiritualNeeds formData={formDataForSteps} updateFormData={updateFormData} />
               )}
               {currentStep === 6 && (
-                <Step7Health formData={formData} updateFormData={updateFormData} />
+                <Step7Health formData={formDataForSteps} updateFormData={updateFormData} />
               )}
 
               {/* Navigation */}
@@ -355,10 +338,20 @@ export default function RegistrationForm() {
                 ) : (
                   <Button
                     onClick={handleSubmit}
+                    disabled={createMemberMutation.isPending}
                     className="h-12 px-8 gap-2 bg-green-600 hover:bg-green-700 text-white"
                   >
-                    <Check className="w-4 h-4" />
-                    Envoyer
+                    {createMemberMutation.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Envoi en cours...
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4" />
+                        Envoyer
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
