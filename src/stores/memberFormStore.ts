@@ -218,6 +218,7 @@ interface MemberFormStore {
   isSubmitted: boolean;
   error: string | null;
   createdMemberId: string | null;
+  createdMemberReference: string | null;
   
   // Actions
   setFormData: (data: Partial<MemberFormData>) => void;
@@ -228,6 +229,7 @@ interface MemberFormStore {
   setIsSubmitted: (isSubmitted: boolean) => void;
   setError: (error: string | null) => void;
   setCreatedMemberId: (id: string | null) => void;
+  setCreatedMemberReference: (reference: string | null) => void;
   resetForm: () => void;
   getFormDataForSubmission: () => Record<string, string | undefined>;
 }
@@ -244,6 +246,7 @@ export const useMemberFormStore = create<MemberFormStore>()(
         isSubmitted: false,
         error: null,
         createdMemberId: null,
+        createdMemberReference: null,
         
         // Actions
         setFormData: (data) =>
@@ -284,6 +287,9 @@ export const useMemberFormStore = create<MemberFormStore>()(
         setCreatedMemberId: (id) =>
           set({ createdMemberId: id }, false, 'setCreatedMemberId'),
         
+        setCreatedMemberReference: (reference) =>
+          set({ createdMemberReference: reference }, false, 'setCreatedMemberReference'),
+        
         resetForm: () =>
           set(
             {
@@ -293,6 +299,7 @@ export const useMemberFormStore = create<MemberFormStore>()(
               isSubmitted: false,
               error: null,
               createdMemberId: null,
+              createdMemberReference: null,
             },
             false,
             'resetForm'

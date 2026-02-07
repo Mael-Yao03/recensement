@@ -9,6 +9,7 @@ const ThankYou = () => {
   const memberFormData = useMemberFormStore((state) => state.formData);
   const memberIsSubmitted = useMemberFormStore((state) => state.isSubmitted);
   const memberCreatedId = useMemberFormStore((state) => state.createdMemberId);
+  const memberCreatedReference = useMemberFormStore((state) => state.createdMemberReference);
   const resetMemberForm = useMemberFormStore((state) => state.resetForm);
   
   const childFormData = useChildFormStore((state) => state.formData);
@@ -26,12 +27,14 @@ const ThankYou = () => {
     nomPrenoms: memberFormData.nomPrenoms || "N/A",
     registrationDate: new Date().toLocaleDateString('fr-FR'),
     id: memberCreatedId || "0000",
+    reference: memberCreatedReference || null,
     picture: memberFormData.photo || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${memberFormData.nomPrenoms || "Membre"}`,
     type: "membre"
   } : {
     nomPrenoms: childFormData.nomPrenoms || "N/A",
     registrationDate: new Date().toLocaleDateString('fr-FR'),
     id: childCreatedId || "0000",
+    reference: null,
     picture: childFormData.photo || `https://api.dicebear.com/9.x/pixel-art/svg?seed=${childFormData.nomPrenoms || "Enfant"}`,
     type: "enfant"
   };
@@ -109,6 +112,9 @@ const ThankYou = () => {
 
                     {/* Infos */}
                     <div className="flex-1 text-center sm:text-left space-y-4">
+                      {data.reference && (
+                        <p className="text-lg font-bold text-primary"><b>Référence :</b> {data.reference}</p>
+                      )}
                       <p><b>Nom et Prénoms :</b> {data.nomPrenoms}</p>
                       <p><b>Type :</b> {data.type === "membre" ? "Membre adulte" : "Enfant"}</p>
                       <p><b>Date d'enregistrement :</b> {data.registrationDate}</p>

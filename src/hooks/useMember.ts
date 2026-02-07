@@ -83,6 +83,7 @@ export function useCreateMember() {
     setIsSubmitted, 
     setError, 
     setCreatedMemberId,
+    setCreatedMemberReference,
     resetForm,
     getFormDataForSubmission 
   } = useMemberFormStore();
@@ -102,6 +103,7 @@ export function useCreateMember() {
       setIsSubmitting(false);
       setIsSubmitted(true);
       setCreatedMemberId(data.id);
+      setCreatedMemberReference(data.reference || null);
       
       // Invalider le cache des membres
       queryClient.invalidateQueries({ queryKey: memberQueryKeys.all });

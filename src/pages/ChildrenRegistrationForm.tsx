@@ -1,14 +1,15 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Steps, Button, Card, Progress, Spin } from "antd"
+import { Steps, Button, Card, Progress, message, Alert } from "antd"
 import { ArrowLeftOutlined, ArrowRightOutlined, CheckOutlined, UserOutlined, TeamOutlined, HeartOutlined, LoadingOutlined } from "@ant-design/icons"
 import { ChildStep1GeneralInfo, ChildStep2Affiliation, ChildStep3SpiritualLife } from "@/components/registration/children-form-steps"
 import { useIsMobile } from "@/hooks/use-mobile"
 import FormHeader from "@/components/FormHeader"
 import { useChildFormStore } from "@/stores"
 import { useCreateChild } from "@/hooks"
+import { validateChildStep, ValidationError } from "@/lib/formValidation"
 
 const steps = [
   { title: "Infos générales", icon: <UserOutlined /> },
@@ -19,6 +20,7 @@ const steps = [
 export default function ChildrenRegistrationForm() {
   const navigate = useNavigate()
   const isMobile = useIsMobile()
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
 
   // Utilisation du store Zustand
   const {
@@ -37,9 +39,25 @@ export default function ChildrenRegistrationForm() {
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData({ [field]: value } as Partial<typeof formData>)
+    // Clear validation error for this field when it changes
+    setValidationErrors(prev => prev.filter(e => e.field !== field))
   }
 
   const handleNextStep = () => {
+    // Validate current step before proceeding
+    const formDataForValidation: Record<string, string | string[] | undefined> = {}
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataForValidation[key] = value as string | string[] | undefined
+    })
+    
+    const result = validateChildStep(currentStep, formDataForValidation)
+    if (!result.isValid) {
+      setValidationErrors(result.errors)
+      message.error("Veuillez remplir tous les champs obligatoires")
+      return
+    }
+    
+    setValidationErrors([])
     if (currentStep < steps.length - 1) {
       nextStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -47,6 +65,7 @@ export default function ChildrenRegistrationForm() {
   }
 
   const handlePrevStep = () => {
+    setValidationErrors([])
     if (currentStep > 0) {
       prevStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -54,6 +73,19 @@ export default function ChildrenRegistrationForm() {
   }
 
   const handleSubmit = async () => {
+    // Validate final step before submission
+    const formDataForValidation: Record<string, string | string[] | undefined> = {}
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataForValidation[key] = value as string | string[] | undefined
+    })
+    
+    const result = validateChildStep(currentStep, formDataForValidation)
+    if (!result.isValid) {
+      setValidationErrors(result.errors)
+      message.error("Veuillez remplir tous les champs obligatoires")
+      return
+    }
+    
     try {
       const payload = getFormDataForSubmission()
       await createChildMutation.mutateAsync(payload as unknown as Parameters<typeof createChildMutation.mutateAsync>[0])
@@ -79,13 +111,13 @@ export default function ChildrenRegistrationForm() {
   const renderStep = () => {
     switch (currentStep) {
       case 0:
-        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
+        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
       case 1:
-        return <ChildStep2Affiliation formData={formDataForSteps} updateFormData={updateFormData} />
+        return <ChildStep2Affiliation formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
       case 2:
-        return <ChildStep3SpiritualLife formData={formDataForSteps} updateFormData={updateFormData} />
+        return <ChildStep3SpiritualLife formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
       default:
-        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
+        return <ChildStep1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
     }
   }
 

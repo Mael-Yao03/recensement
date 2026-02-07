@@ -4,6 +4,7 @@ import { Input, Radio, Select, Row, Col, Upload, message } from "antd"
 import { CameraOutlined, UserOutlined } from "@ant-design/icons"
 import type { UploadProps } from "antd"
 import { useState } from "react"
+import type { ValidationError } from "@/lib/formValidation"
 
 interface FormData {
   [key: string]: string | string[] | undefined
@@ -12,6 +13,17 @@ interface FormData {
 interface StepProps {
   formData: FormData
   updateFormData: (field: string, value: string | string[]) => void
+  errors?: ValidationError[]
+}
+
+// Helper function to check if a field has an error
+function hasError(errors: ValidationError[] | undefined, field: string): boolean {
+  return errors?.some(e => e.field === field) ?? false
+}
+
+// Helper function to get error message for a field
+function getErrorMessage(errors: ValidationError[] | undefined, field: string): string | undefined {
+  return errors?.find(e => e.field === field)?.message
 }
 
 // Photo Upload Component
@@ -84,7 +96,7 @@ function PhotoUpload({ formData, updateFormData }: StepProps) {
 }
 
 // Step 1: General Information for Children
-export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
+export function ChildStep1GeneralInfo({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -107,7 +119,11 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
             placeholder="Entrez le nom et prénoms de l'enfant"
             value={formData.nomPrenoms as string || ""}
             onChange={(e) => updateFormData("nomPrenoms", e.target.value)}
+            status={hasError(errors, "nomPrenoms") ? "error" : undefined}
           />
+          {hasError(errors, "nomPrenoms") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "nomPrenoms")}</p>
+          )}
         </div>
 
         <Row gutter={[24, 24]}>
@@ -124,6 +140,9 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
                 <Radio value="masculin">Masculin</Radio>
                 <Radio value="feminin">Féminin</Radio>
               </Radio.Group>
+              {hasError(errors, "sexe") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "sexe")}</p>
+              )}
             </div>
           </Col>
 
@@ -137,7 +156,11 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
                 type="date"
                 value={formData.dateNaissance as string || ""}
                 onChange={(e) => updateFormData("dateNaissance", e.target.value)}
+                status={hasError(errors, "dateNaissance") ? "error" : undefined}
               />
+              {hasError(errors, "dateNaissance") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "dateNaissance")}</p>
+              )}
             </div>
           </Col>
         </Row>
@@ -153,7 +176,11 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
                 placeholder="Nationalité de l'enfant"
                 value={formData.nationalite as string || ""}
                 onChange={(e) => updateFormData("nationalite", e.target.value)}
+                status={hasError(errors, "nationalite") ? "error" : undefined}
               />
+              {hasError(errors, "nationalite") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "nationalite")}</p>
+              )}
             </div>
           </Col>
 
@@ -179,7 +206,11 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
             placeholder="Ex: Abidjan, Cocody, Angré"
             value={formData.lieuResidence as string || ""}
             onChange={(e) => updateFormData("lieuResidence", e.target.value)}
+            status={hasError(errors, "lieuResidence") ? "error" : undefined}
           />
+          {hasError(errors, "lieuResidence") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "lieuResidence")}</p>
+          )}
           <p className="text-sm text-muted-foreground">Ville, commune, quartier</p>
         </div>
       </div>
@@ -188,7 +219,7 @@ export function ChildStep1GeneralInfo({ formData, updateFormData }: StepProps) {
 }
 
 // Step 2: Affiliation (Parents/Tuteur)
-export function ChildStep2Affiliation({ formData, updateFormData }: StepProps) {
+export function ChildStep2Affiliation({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -232,7 +263,7 @@ export function ChildStep2Affiliation({ formData, updateFormData }: StepProps) {
         </div>
 
         {/* Résidence et contact des parents */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "residenceParents") || hasError(errors, "contactParents") ? "border-destructive" : "border-border"}`}>
           <h3 className="font-semibold text-lg">Résidence et contact des parents</h3>
           
           <div className="space-y-2">
@@ -244,7 +275,11 @@ export function ChildStep2Affiliation({ formData, updateFormData }: StepProps) {
               placeholder="Ex: Abidjan, Cocody, Angré"
               value={formData.residenceParents as string || ""}
               onChange={(e) => updateFormData("residenceParents", e.target.value)}
+              status={hasError(errors, "residenceParents") ? "error" : undefined}
             />
+            {hasError(errors, "residenceParents") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "residenceParents")}</p>
+            )}
             <p className="text-sm text-muted-foreground">Ville, commune, quartier</p>
           </div>
 
@@ -257,7 +292,11 @@ export function ChildStep2Affiliation({ formData, updateFormData }: StepProps) {
               placeholder="+225 XX XX XX XX XX"
               value={formData.contactParents as string || ""}
               onChange={(e) => updateFormData("contactParents", e.target.value)}
+              status={hasError(errors, "contactParents") ? "error" : undefined}
             />
+            {hasError(errors, "contactParents") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "contactParents")}</p>
+            )}
             <p className="text-sm text-muted-foreground">Téléphone / WhatsApp</p>
           </div>
         </div>
@@ -311,7 +350,7 @@ export function ChildStep2Affiliation({ formData, updateFormData }: StepProps) {
 }
 
 // Step 3: Social and Spiritual Life
-export function ChildStep3SpiritualLife({ formData, updateFormData }: StepProps) {
+export function ChildStep3SpiritualLife({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -329,7 +368,11 @@ export function ChildStep3SpiritualLife({ formData, updateFormData }: StepProps)
             placeholder="Ex: Depuis 2020, Depuis 5 ans..."
             value={formData.depuisQuandEglise as string || ""}
             onChange={(e) => updateFormData("depuisQuandEglise", e.target.value)}
+            status={hasError(errors, "depuisQuandEglise") ? "error" : undefined}
           />
+          {hasError(errors, "depuisQuandEglise") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "depuisQuandEglise")}</p>
+          )}
         </div>
 
         <div className="space-y-3">
@@ -344,6 +387,9 @@ export function ChildStep3SpiritualLife({ formData, updateFormData }: StepProps)
             <Radio value="oui">Oui</Radio>
             <Radio value="non">Non</Radio>
           </Radio.Group>
+          {hasError(errors, "parentsEglise") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "parentsEglise")}</p>
+          )}
         </div>
 
         {formData.parentsEglise === "non" && (
@@ -384,6 +430,7 @@ export function ChildStep3SpiritualLife({ formData, updateFormData }: StepProps)
             placeholder="Sélectionnez le niveau d'études"
             value={formData.niveauEtudes as string || undefined}
             onChange={(value) => updateFormData("niveauEtudes", value)}
+            status={hasError(errors, "niveauEtudes") ? "error" : undefined}
             options={[
               { value: "aucun", label: "Aucun" },
               { value: "primaire", label: "Primaire" },
@@ -392,6 +439,9 @@ export function ChildStep3SpiritualLife({ formData, updateFormData }: StepProps)
               { value: "coranique", label: "École Coranique" },
             ]}
           />
+          {hasError(errors, "niveauEtudes") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "niveauEtudes")}</p>
+          )}
         </div>
       </div>
     </div>

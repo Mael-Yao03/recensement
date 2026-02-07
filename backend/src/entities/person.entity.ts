@@ -49,6 +49,10 @@ export class Person {
   @Column({ type: 'varchar', length: 50, nullable: true })
   niveauEtudes: string;
 
+  // Référence unique du membre (initiales + chiffres)
+  @Column({ type: 'varchar', length: 20, unique: true, nullable: true })
+  reference: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

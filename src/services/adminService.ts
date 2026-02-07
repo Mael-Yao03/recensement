@@ -175,18 +175,30 @@ export interface PaginatedResponse<T> {
   pages: number;
 }
 
+export interface Member {
+  id: string;
+  nomPrenoms: string;
+  [key: string]: unknown;
+}
+
+export interface Child {
+  id: string;
+  nomPrenoms: string;
+  [key: string]: unknown;
+}
+
 export const dashboardService = {
   getStats: async (): Promise<ApiResponse<DashboardStats>> => {
     return api.get('/api/dashboard/stats');
   },
 
-  getMembers: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<any>>> => {
+  getMembers: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<Member>>> => {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.append('search', search);
     return api.get(`/api/dashboard/members?${params.toString()}`);
   },
 
-  getChildren: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<any>>> => {
+  getChildren: async (page = 1, limit = 10, search?: string): Promise<ApiResponse<PaginatedResponse<Child>>> => {
     const params = new URLSearchParams({ page: String(page), limit: String(limit) });
     if (search) params.append('search', search);
     return api.get(`/api/dashboard/children?${params.toString()}`);

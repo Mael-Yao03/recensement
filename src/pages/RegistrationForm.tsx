@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { message } from "antd"
 import {
   User,
   Home,
@@ -36,6 +37,7 @@ import FormHeader from "@/components/FormHeader"
 import Logo from "@/assets/trans.png"
 import { useMemberFormStore } from "@/stores"
 import { useCreateMember } from "@/hooks"
+import { validateMemberStep, ValidationError } from "@/lib/formValidation"
 
 const steps = [
   { id: 1, title: "Informations", icon: User, shortTitle: "Infos" },
@@ -49,6 +51,7 @@ const steps = [
 
 export default function RegistrationForm() {
   const [hasStarted, setHasStarted] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([])
   const navigate = useNavigate()
   
   // Utilisation du store Zustand
@@ -69,11 +72,28 @@ export default function RegistrationForm() {
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData({ [field]: value } as Partial<typeof formData>)
+    // Clear validation error for this field when it's updated
+    setValidationErrors(prev => prev.filter(err => err.field !== field))
   }
 
   const progress = ((currentStep + 1) / steps.length) * 100
 
   const next = () => {
+    // Validate current step before proceeding
+    const formDataForValidation: Record<string, string | string[] | undefined> = {}
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataForValidation[key] = value as string | string[] | undefined
+    })
+    
+    const validation = validateMemberStep(currentStep, formDataForValidation)
+    
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors)
+      message.error('Veuillez remplir tous les champs obligatoires')
+      return
+    }
+    
+    setValidationErrors([])
     if (currentStep < steps.length - 1) {
       nextStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -81,6 +101,7 @@ export default function RegistrationForm() {
   }
 
   const prev = () => {
+    setValidationErrors([])
     if (currentStep > 0) {
       prevStep()
       window.scrollTo({ top: 0, behavior: "smooth" })
@@ -88,6 +109,20 @@ export default function RegistrationForm() {
   }
 
   const handleSubmit = async () => {
+    // Validate last step before submitting
+    const formDataForValidation: Record<string, string | string[] | undefined> = {}
+    Object.entries(formData).forEach(([key, value]) => {
+      formDataForValidation[key] = value as string | string[] | undefined
+    })
+    
+    const validation = validateMemberStep(currentStep, formDataForValidation)
+    
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors)
+      message.error('Veuillez remplir tous les champs obligatoires')
+      return
+    }
+    
     try {
       const payload = getFormDataForSubmission()
       await createMemberMutation.mutateAsync(payload as unknown as Parameters<typeof createMemberMutation.mutateAsync>[0])
@@ -293,26 +328,40 @@ export default function RegistrationForm() {
           {/* Form card */}
           <Card className="border-0 shadow-xl">
             <CardContent className="p-6 md:p-8 lg:p-10">
+              {/* Validation errors display */}
+              {validationErrors.length > 0 && (
+                <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                  <p className="text-sm font-medium text-destructive mb-2">
+                    Veuillez corriger les erreurs suivantes :
+                  </p>
+                  <ul className="list-disc list-inside text-sm text-destructive">
+                    {validationErrors.map((error, index) => (
+                      <li key={index}>{error.message}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
               {currentStep === 0 && (
-                <Step1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step1GeneralInfo formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 1 && (
-                <Step2Family formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step2Family formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 2 && (
-                <Step3Spiritual formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step3Spiritual formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 3 && (
-                <Step4ChurchLife formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step4ChurchLife formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 4 && (
-                <Step5Professional formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step5Professional formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 5 && (
-                <Step6SpiritualNeeds formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step6SpiritualNeeds formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
               {currentStep === 6 && (
-                <Step7Health formData={formDataForSteps} updateFormData={updateFormData} />
+                <Step7Health formData={formDataForSteps} updateFormData={updateFormData} errors={validationErrors} />
               )}
 
               {/* Navigation */}

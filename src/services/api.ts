@@ -1,7 +1,7 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios';
 
 // Configuration de base de l'API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_ENV == 'production' ? import.meta.env.VITE_API_URL : 'http://localhost:3000';
 
 // Création de l'instance axios
 const api: AxiosInstance = axios.create({

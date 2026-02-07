@@ -101,6 +101,7 @@ export interface Member {
   id: string;
   type: 'member';
   slug: string;
+  reference?: string;
   nomPrenoms: string;
   sexe: string;
   nationalite?: string;

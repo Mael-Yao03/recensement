@@ -54,6 +54,38 @@ export class MemberService {
     private dataSource: DataSource,
   ) {}
 
+  /**
+   * Génère une référence unique basée sur les initiales du nom
+   * Format: ABC-123456 (initiales + 6 chiffres aléatoires)
+   */
+  private async generateReference(nomPrenoms: string): Promise<string> {
+    // Extraire les initiales du nom et prénoms
+    const initials = nomPrenoms
+      .split(' ')
+      .filter(word => word.length > 0)
+      .map(word => word.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 3) // Maximum 3 initiales
+      .padEnd(2, 'X'); // Minimum 2 caractères
+
+    // Générer un numéro unique
+    let reference: string;
+    let exists = true;
+    
+    while (exists) {
+      const randomNumber = Math.floor(100000 + Math.random() * 900000); // 6 chiffres
+      reference = `${initials}-${randomNumber}`;
+      
+      // Vérifier si la référence existe déjà
+      const existing = await this.personRepository.findOne({
+        where: { reference },
+      });
+      exists = !!existing;
+    }
+    
+    return reference!;
+  }
+
   async create(createMemberDto: CreateMemberDto): Promise<Person> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -61,11 +93,15 @@ export class MemberService {
 
     try {
       const slug = this.fileService.generateSlug();
+      
+      // Générer la référence unique
+      const reference = await this.generateReference(createMemberDto.nomPrenoms || 'MEMBRE');
 
       // Séparer les champs Person et MemberDetails
       const personData: Partial<Person> = {
         type: 'member',
         slug,
+        reference,
       };
       const memberDetailsData: Partial<MemberDetails> = {};
 

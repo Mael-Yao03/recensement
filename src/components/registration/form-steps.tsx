@@ -4,6 +4,7 @@ import { Input, Radio, Checkbox, Select, Row, Col, Upload, message } from "antd"
 import { CameraOutlined, UserOutlined } from "@ant-design/icons"
 import type { UploadProps } from "antd"
 import { useState } from "react"
+import type { ValidationError } from "@/lib/formValidation"
 
 const { TextArea } = Input
 
@@ -14,6 +15,17 @@ interface FormData {
 interface StepProps {
   formData: FormData
   updateFormData: (field: string, value: string | string[]) => void
+  errors?: ValidationError[]
+}
+
+// Helper function to check if a field has an error
+function hasError(errors: ValidationError[] | undefined, field: string): boolean {
+  return errors?.some(e => e.field === field) ?? false
+}
+
+// Helper function to get error message for a field
+function getErrorMessage(errors: ValidationError[] | undefined, field: string): string | undefined {
+  return errors?.find(e => e.field === field)?.message
 }
 
 // Photo Upload Component
@@ -99,7 +111,7 @@ const groupesDepartements = [
 ]
 
 // Step 1: General Information
-export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
+export function Step1GeneralInfo({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -122,7 +134,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
             placeholder="Entrez votre nom et prénoms"
             value={formData.nomPrenoms as string || ""}
             onChange={(e) => updateFormData("nomPrenoms", e.target.value)}
+            status={hasError(errors, "nomPrenoms") ? "error" : undefined}
           />
+          {hasError(errors, "nomPrenoms") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "nomPrenoms")}</p>
+          )}
         </div>
 
         <Row gutter={[24, 24]}>
@@ -139,6 +155,9 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
                 <Radio value="homme">Homme</Radio>
                 <Radio value="femme">Femme</Radio>
               </Radio.Group>
+              {hasError(errors, "sexe") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "sexe")}</p>
+              )}
             </div>
           </Col>
 
@@ -155,7 +174,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
                 placeholder="Ex: 1990"
                 value={formData.anneeNaissance as string || ""}
                 onChange={(e) => updateFormData("anneeNaissance", e.target.value)}
+                status={hasError(errors, "anneeNaissance") ? "error" : undefined}
               />
+              {hasError(errors, "anneeNaissance") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "anneeNaissance")}</p>
+              )}
             </div>
           </Col>
         </Row>
@@ -171,7 +194,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
                 placeholder="Votre nationalité"
                 value={formData.nationalite as string || ""}
                 onChange={(e) => updateFormData("nationalite", e.target.value)}
+                status={hasError(errors, "nationalite") ? "error" : undefined}
               />
+              {hasError(errors, "nationalite") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "nationalite")}</p>
+              )}
             </div>
           </Col>
 
@@ -197,7 +224,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
             placeholder="Ex: Abidjan, Cocody, Angré"
             value={formData.lieuResidence as string || ""}
             onChange={(e) => updateFormData("lieuResidence", e.target.value)}
+            status={hasError(errors, "lieuResidence") ? "error" : undefined}
           />
+          {hasError(errors, "lieuResidence") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "lieuResidence")}</p>
+          )}
           <p className="text-sm text-muted-foreground">Ville, commune, quartier</p>
         </div>
 
@@ -212,7 +243,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
                 placeholder="+225 XX XX XX XX XX"
                 value={formData.telephone as string || ""}
                 onChange={(e) => updateFormData("telephone", e.target.value)}
+                status={hasError(errors, "telephone") ? "error" : undefined}
               />
+              {hasError(errors, "telephone") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "telephone")}</p>
+              )}
             </div>
           </Col>
 
@@ -225,7 +260,11 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
                 placeholder="votre@email.com"
                 value={formData.email as string || ""}
                 onChange={(e) => updateFormData("email", e.target.value)}
+                status={hasError(errors, "email") ? "error" : undefined}
               />
+              {hasError(errors, "email") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "email")}</p>
+              )}
             </div>
           </Col>
         </Row>
@@ -235,7 +274,7 @@ export function Step1GeneralInfo({ formData, updateFormData }: StepProps) {
 }
 
 // Step 2: Family Situation
-export function Step2Family({ formData, updateFormData }: StepProps) {
+export function Step2Family({ formData, updateFormData, errors }: StepProps) {
   const situationMatrimoniale = formData.situationMatrimoniale as string
 
   return (
@@ -268,7 +307,9 @@ export function Step2Family({ formData, updateFormData }: StepProps) {
                   className={`flex items-center space-x-3 rounded-lg border p-4 cursor-pointer transition-colors ${
                     situationMatrimoniale === option.value
                       ? "border-primary bg-primary/5"
-                      : "border-border hover:bg-muted/50"
+                      : hasError(errors, "situationMatrimoniale")
+                        ? "border-destructive"
+                        : "border-border hover:bg-muted/50"
                   }`}
                   onClick={() => updateFormData("situationMatrimoniale", option.value)}
                 >
@@ -277,6 +318,9 @@ export function Step2Family({ formData, updateFormData }: StepProps) {
               ))}
             </div>
           </Radio.Group>
+          {hasError(errors, "situationMatrimoniale") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "situationMatrimoniale")}</p>
+          )}
         </div>
 
         {["marie", "concubin"].includes(situationMatrimoniale) && (
@@ -424,7 +468,7 @@ export function Step2Family({ formData, updateFormData }: StepProps) {
 }
 
 // Step 3: Spiritual Journey
-export function Step3Spiritual({ formData, updateFormData }: StepProps) {
+export function Step3Spiritual({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
@@ -435,7 +479,7 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
       <div className="grid gap-6">
         <div className="space-y-3">
           <label className="text-base font-medium block">
-            {"Quelle est votre religion d'origine ?"} <span className="text-destructive">*</span>
+            {"Quelle est votre religion d'origine ?"}
           </label>
           <Radio.Group
             value={formData.religionOrigine as string || ""}
@@ -528,8 +572,8 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
         </div>
 
         {/* Baptême d'eau */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
-          <h3 className="font-semibold text-lg">{"Baptême d'eau"}</h3>
+        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "baptemeEau") ? "border-destructive" : "border-border"}`}>
+          <h3 className="font-semibold text-lg">{"Baptême d'eau"} <span className="text-destructive">*</span></h3>
           <div className="space-y-3">
             <Radio.Group
               value={formData.baptemeEau as string || ""}
@@ -539,6 +583,9 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
               <Radio value="oui">Oui</Radio>
               <Radio value="non">Non</Radio>
             </Radio.Group>
+            {hasError(errors, "baptemeEau") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "baptemeEau")}</p>
+            )}
           </div>
 
           {formData.baptemeEau === "oui" && (
@@ -572,8 +619,8 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
         </div>
 
         {/* Baptême Saint-Esprit */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
-          <h3 className="font-semibold text-lg">Baptême dans le Saint-Esprit</h3>
+        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "baptemeSaintEsprit") ? "border-destructive" : "border-border"}`}>
+          <h3 className="font-semibold text-lg">Baptême dans le Saint-Esprit <span className="text-destructive">*</span></h3>
           <div className="space-y-3">
             <Radio.Group
               value={formData.baptemeSaintEsprit as string || ""}
@@ -583,6 +630,9 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
               <Radio value="oui">Oui</Radio>
               <Radio value="non">Non</Radio>
             </Radio.Group>
+            {hasError(errors, "baptemeSaintEsprit") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "baptemeSaintEsprit")}</p>
+            )}
           </div>
 
           {formData.baptemeSaintEsprit === "oui" && (
@@ -747,7 +797,7 @@ export function Step3Spiritual({ formData, updateFormData }: StepProps) {
 }
 
 // Step 4: Church Life
-export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
+export function Step4ChurchLife({ formData, updateFormData, errors }: StepProps) {
   const groupesActuels = (formData.groupesActuels as string[]) || []
   const groupesSouhaites = (formData.groupesSouhaites as string[]) || []
 
@@ -768,9 +818,45 @@ export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
       </div>
 
       <div className="grid gap-6">
+        <div className="space-y-2">
+          <label className="text-base font-medium block">
+            Depuis quelle année fréquentez-vous le Temple La Transfiguration ? <span className="text-destructive">*</span>
+          </label>
+          <Input
+            size="large"
+            type="number"
+            min={1900}
+            max={new Date().getFullYear()}
+            placeholder="Ex: 2015"
+            value={formData.anneeTransfiguration as string || ""}
+            onChange={(e) => updateFormData("anneeTransfiguration", e.target.value)}
+            status={hasError(errors, "anneeTransfiguration") ? "error" : undefined}
+          />
+          {hasError(errors, "anneeTransfiguration") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "anneeTransfiguration")}</p>
+          )}
+        </div>
+
         <div className="space-y-3">
           <label className="text-base font-medium block">
-            {"Êtes-vous membre d'un groupe, comité ou département de l'église ?"}
+            Êtes-vous satisfait(e) de la vie à La Transfiguration ? <span className="text-destructive">*</span>
+          </label>
+          <Radio.Group
+            value={formData.satisfactionTransfiguration as string || ""}
+            onChange={(e) => updateFormData("satisfactionTransfiguration", e.target.value)}
+            className="flex gap-4"
+          >
+            <Radio value="oui">Oui</Radio>
+            <Radio value="non">Non</Radio>
+          </Radio.Group>
+          {hasError(errors, "satisfactionTransfiguration") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "satisfactionTransfiguration")}</p>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <label className="text-base font-medium block">
+            {"Êtes-vous membre d'un groupe, comité ou département de l'église ?"} <span className="text-destructive">*</span>
           </label>
           <Radio.Group
             value={formData.membreGroupe as string || ""}
@@ -780,6 +866,9 @@ export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
             <Radio value="oui">Oui</Radio>
             <Radio value="non">Non</Radio>
           </Radio.Group>
+          {hasError(errors, "membreGroupe") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "membreGroupe")}</p>
+          )}
         </div>
 
         {formData.membreGroupe === "oui" && (
@@ -893,7 +982,7 @@ export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
         )}
 
         {/* Participation aux cultes */}
-        <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
+        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "frequenceCultesDimanche") ? "border-destructive" : "border-border"}`}>
           <h3 className="font-semibold text-lg">Participation aux cultes</h3>
 
           <div className="space-y-3">
@@ -925,6 +1014,9 @@ export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
                 ))}
               </div>
             </Radio.Group>
+            {hasError(errors, "frequenceCultesDimanche") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "frequenceCultesDimanche")}</p>
+            )}
           </div>
 
           {["occasionnellement", "rarement"].includes(formData.frequenceCultesDimanche as string) && (
@@ -1018,7 +1110,7 @@ export function Step4ChurchLife({ formData, updateFormData }: StepProps) {
 }
 
 // Step 5: Professional Life
-export function Step5Professional({ formData, updateFormData }: StepProps) {
+export function Step5Professional({ formData, updateFormData, errors }: StepProps) {
   const competences = (formData.competences as string[]) || []
   const disponibilite = (formData.disponibiliteActivites as string[]) || []
 
@@ -1060,6 +1152,7 @@ export function Step5Professional({ formData, updateFormData }: StepProps) {
                 placeholder="Sélectionnez"
                 value={formData.niveauEtudes as string || undefined}
                 onChange={(value) => updateFormData("niveauEtudes", value)}
+                status={hasError(errors, "niveauEtudes") ? "error" : undefined}
                 options={[
                   { value: "aucun", label: "Aucun" },
                   { value: "primaire", label: "Primaire" },
@@ -1068,6 +1161,9 @@ export function Step5Professional({ formData, updateFormData }: StepProps) {
                   { value: "coranique", label: "École Coranique" },
                 ]}
               />
+              {hasError(errors, "niveauEtudes") && (
+                <p className="text-sm text-destructive">{getErrorMessage(errors, "niveauEtudes")}</p>
+              )}
             </div>
           </Col>
 
@@ -1123,13 +1219,16 @@ export function Step5Professional({ formData, updateFormData }: StepProps) {
         </Row>
 
         <div className="space-y-2">
-          <label className="text-base font-medium block">Situation professionnelle</label>
+          <label className="text-base font-medium block">
+            Situation professionnelle <span className="text-destructive">*</span>
+          </label>
           <Select
             size="large"
             className="w-full"
             placeholder="Sélectionnez"
             value={formData.situationProfessionnelle as string || undefined}
             onChange={(value) => updateFormData("situationProfessionnelle", value)}
+            status={hasError(errors, "situationProfessionnelle") ? "error" : undefined}
             options={[
               { value: "employe-ouvrier", label: "Employé (ouvrier ou agent)" },
               { value: "employe-cadre-moyen", label: "Employé (cadre moyen)" },
@@ -1144,6 +1243,9 @@ export function Step5Professional({ formData, updateFormData }: StepProps) {
               { value: "menagere", label: "Ménagère" },
             ]}
           />
+          {hasError(errors, "situationProfessionnelle") && (
+            <p className="text-sm text-destructive">{getErrorMessage(errors, "situationProfessionnelle")}</p>
+          )}
         </div>
 
         <div className="space-y-4 p-4 rounded-lg bg-muted/30 border border-border">
@@ -1339,7 +1441,7 @@ export function Step5Professional({ formData, updateFormData }: StepProps) {
 }
 
 // Step 6: Spiritual Needs
-export function Step6SpiritualNeeds({ formData, updateFormData }: StepProps) {
+export function Step6SpiritualNeeds({ formData, updateFormData, errors }: StepProps) {
   const domainesAppui = (formData.domainesAppui as string[]) || []
 
   const toggleDomaine = (domaine: string) => {
@@ -1479,7 +1581,7 @@ export function Step6SpiritualNeeds({ formData, updateFormData }: StepProps) {
 }
 
 // Step 7: Health
-export function Step7Health({ formData, updateFormData }: StepProps) {
+export function Step7Health({ formData, updateFormData, errors }: StepProps) {
   return (
     <div className="space-y-8">
       <div className="space-y-2">
