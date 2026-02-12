@@ -129,8 +129,8 @@ export class MemberDetails {
   @Column({ type: 'varchar', length: 10, nullable: true })
   membreGroupe: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  groupesActuels: string[];
+  @Column({ type: 'text', nullable: true })
+  groupesActuels: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   autreGroupeActuel: string;
@@ -144,8 +144,8 @@ export class MemberDetails {
   @Column({ type: 'text', nullable: true })
   raisonNonMembre: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  groupesSouhaites: string[];
+  @Column({ type: 'text', nullable: true })
+  groupesSouhaites: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   autreGroupeSouhaite: string;
@@ -190,8 +190,8 @@ export class MemberDetails {
   @Column({ type: 'varchar', length: 255, nullable: true })
   precisionLieuTravail: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  disponibiliteActivites: string[];
+  @Column({ type: 'text', nullable: true })
+  disponibiliteActivites: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   autreDisponibilite: string;
@@ -208,8 +208,8 @@ export class MemberDetails {
   @Column({ type: 'varchar', length: 255, nullable: true })
   detailsActivitesExtraPro: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  competences: string[];
+  @Column({ type: 'text', nullable: true })
+  competences: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   autresCompetences: string;
@@ -221,8 +221,8 @@ export class MemberDetails {
   @Column({ type: 'varchar', length: 10, nullable: true })
   besoinAccompagnement: string;
 
-  @Column({ type: 'simple-array', nullable: true })
-  domainesAppui: string[];
+  @Column({ type: 'text', nullable: true })
+  domainesAppui: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   autreDomaineAppui: string;

@@ -27,17 +27,16 @@ const ARRAY_FIELDS = [
   'typeFormation',
 ];
 
-// Fonction utilitaire pour parser les champs JSON
-function parseArrayField(value: any): string[] | null {
+// Fonction utilitaire pour convertir les champs tableau en chaîne CSV
+function parseArrayField(value: any): string | null {
   if (!value) return null;
-  if (Array.isArray(value)) return value;
+  if (Array.isArray(value)) return value.join(',');
   if (typeof value === 'string') {
     try {
       const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed : [value];
+      return Array.isArray(parsed) ? parsed.join(',') : value;
     } catch {
-      // Si ce n'est pas du JSON valide, retourner comme élément unique
-      return value ? [value] : null;
+      return value || null;
     }
   }
   return null;
@@ -132,12 +131,13 @@ export class MemberService {
       });
       await queryRunner.manager.save(memberDetails);
 
-      // Sauvegarder la photo si présente
+      // Sauvegarder la photo si présente (dans la même transaction)
       if (createMemberDto.photo) {
         await this.fileService.saveBase64Image(
           createMemberDto.photo,
           savedPerson.id,
           'photo_identite',
+          queryRunner,
         );
       }
 
@@ -231,6 +231,7 @@ export class MemberService {
           updateMemberDto.photo,
           id,
           'photo_identite',
+          queryRunner,
         );
       }
 

@@ -61,20 +61,48 @@ import { JwtStrategy, JwtAuthGuard, PermissionsGuard } from './guards';
         signOptions: { expiresIn: '24h' },
       }),
     }),
-    TypeOrmModule.forRoot({
-      type: 'sqlite',
-      database: 'database.sqlite',
-      entities: [
-        Person,
-        MemberDetails,
-        ChildDetails,
-        Image,
-        User,
-        Role,
-        Permission,
-      ],
-      synchronize: true, // À désactiver en production
-      logging: true,
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const isProd = configService.get<string>('NODE_ENV') === 'production';
+        const databaseUrl = configService.get<string>('DATABASE_URL');
+
+        if (databaseUrl) {
+          return {
+            type: 'postgres',
+            url: databaseUrl,
+            ssl: { rejectUnauthorized: false },
+            entities: [
+              Person,
+              MemberDetails,
+              ChildDetails,
+              Image,
+              User,
+              Role,
+              Permission,
+            ],
+            synchronize: !isProd,
+            logging: !isProd,
+          };
+        }
+
+        return {
+          type: 'sqlite',
+          database: 'database.sqlite',
+          entities: [
+            Person,
+            MemberDetails,
+            ChildDetails,
+            Image,
+            User,
+            Role,
+            Permission,
+          ],
+          synchronize: !isProd,
+          logging: !isProd,
+        };
+      },
     }),
     TypeOrmModule.forFeature([
       Person,

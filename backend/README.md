@@ -60,6 +60,29 @@ $ npm run test:cov
 
 ## Deployment
 
+### Render (service web)
+
+- **Root Directory**: `backend`
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm run start:prod`
+- **Env**:
+  - `NODE_ENV=production`
+  - `JWT_SECRET=...`
+  - `DATABASE_URL=...` (PostgreSQL Render)
+
+> La config TypeORM bascule automatiquement sur PostgreSQL si `DATABASE_URL` est défini.
+
+### Vercel (Serverless)
+
+- **Root Directory**: `backend`
+- Vercel utilise `api/index.ts` comme point d’entrée (déjà configuré).
+- **Env**:
+  - `NODE_ENV=production`
+  - `JWT_SECRET=...`
+  - `DATABASE_URL=...` (PostgreSQL)
+
+> Les routes sont servies via le handler Nest dans `src/serverless.ts`.
+
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:

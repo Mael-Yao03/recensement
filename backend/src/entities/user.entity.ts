@@ -33,7 +33,7 @@ export class User {
   @Column({ type: 'boolean', default: true })
   isActive: boolean;
 
-  @Column({ type: 'datetime', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   lastLoginAt: Date;
 
   @Column({ type: 'uuid' })

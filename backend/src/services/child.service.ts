@@ -64,12 +64,13 @@ export class ChildService {
       });
       await queryRunner.manager.save(childDetails);
 
-      // Sauvegarder la photo si présente
+      // Sauvegarder la photo si présente (dans la même transaction)
       if (createChildDto.photo) {
         await this.fileService.saveBase64Image(
           createChildDto.photo,
           savedPerson.id,
           'photo_identite',
+          queryRunner,
         );
       }
 
@@ -157,6 +158,7 @@ export class ChildService {
           updateChildDto.photo,
           id,
           'photo_identite',
+          queryRunner,
         );
       }
 

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, QueryRunner } from 'typeorm';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
@@ -38,6 +38,7 @@ export class FileService {
     base64Data: string,
     personId: string,
     imageType: ImageType = 'photo_identite',
+    queryRunner?: QueryRunner,
   ): Promise<Image | null> {
     if (!base64Data || !base64Data.startsWith('data:image')) {
       return null;
@@ -61,15 +62,22 @@ export class FileService {
       fs.writeFileSync(filePath, buffer);
 
       // Créer l'entrée en base de données
-      const image = this.imageRepository.create({
+      const imageData_ = {
         imageType,
         fileName,
         filePath: `pictures/${fileName}`,
         mimeType: `image/${extension}`,
         fileSize: buffer.length,
         personId,
-      });
+      };
 
+      // Utiliser le queryRunner si fourni (même transaction)
+      if (queryRunner) {
+        const image = queryRunner.manager.create(Image, imageData_);
+        return queryRunner.manager.save(image);
+      }
+
+      const image = this.imageRepository.create(imageData_);
       return this.imageRepository.save(image);
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de l'image:", error);
