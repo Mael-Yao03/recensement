@@ -1,12 +1,10 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { json, urlencoded } from 'express';
-import express from 'express';
+import { ValidationPipe } from '@nestjs/common';
+import { AppModule } from './app.module';
+import * as express from 'express';
 
 const server = express();
-server.use(json({ limit: '50mb' }));
-server.use(urlencoded({ extended: true, limit: '50mb' }));
 
 let appInitialized = false;
 
@@ -14,13 +12,31 @@ async function bootstrap() {
   if (appInitialized) {
     return;
   }
-  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server), {
+    logger: ['error', 'warn'],
+  });
+
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
   app.enableCors({
     origin: '*',
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
+
   await app.init();
   appInitialized = true;
 }
