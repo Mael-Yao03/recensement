@@ -93,7 +93,7 @@ const AdminMembers: React.FC = () => {
 
   const getPhotoUrl = (person: any) => {
     if (person.images && person.images.length > 0) {
-      return `http://localhost:3000/${person.images[0].filePath}`;
+      return person.images[0].filePath;
     }
     return null;
   };
@@ -106,7 +106,7 @@ const AdminMembers: React.FC = () => {
       render: (record: any) => {
         const photoUrl = getPhotoUrl(record);
         return photoUrl ? (
-          <Avatar src={photoUrl} size={50} />
+          <Avatar src={import.meta.env.VITE_ENV == 'production' ? photoUrl : `https://api.dicebear.com/9.x/toon-head/svg?seed=avatar`} size={50} />
         ) : (
           <Avatar icon={<UserOutlined />} size={50} />
         );
@@ -231,17 +231,15 @@ const AdminMembers: React.FC = () => {
     return (
       <div className="space-y-6">
         <div className="text-center">
-          {photoUrl ? (
+          
             <Image
-              src={photoUrl}
+              src={import.meta.env.VITE_ENV == 'production' || !photoUrl ? photoUrl : `https://api.dicebear.com/9.x/toon-head/svg?seed=avatar`}
               alt={selectedPerson.nomPrenoms}
               width={150}
               height={150}
               className="rounded-lg object-cover"
             />
-          ) : (
-            <Avatar icon={<UserOutlined />} size={150} />
-          )}
+
           <Title level={4} className="mt-4">
             {selectedPerson.nomPrenoms}
           </Title>

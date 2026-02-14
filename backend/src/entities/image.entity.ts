@@ -24,9 +24,13 @@ export class Image {
   @Column({ type: 'varchar', length: 255 })
   fileName: string;
 
-  // Chemin relatif du fichier
-  @Column({ type: 'varchar', length: 255 })
+  // URL de l'image (Cloudinary)
+  @Column({ type: 'varchar', length: 500 })
   filePath: string;
+
+  // ID public Cloudinary (pour suppression)
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  publicId: string;
 
   // Type MIME
   @Column({ type: 'varchar', length: 100, nullable: true })

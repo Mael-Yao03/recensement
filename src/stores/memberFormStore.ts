@@ -219,6 +219,8 @@ interface MemberFormStore {
   error: string | null;
   createdMemberId: string | null;
   createdMemberReference: string | null;
+  submittedData: MemberFormData | null;
+  submittedPhoto: string | null;
   
   // Actions
   setFormData: (data: Partial<MemberFormData>) => void;
@@ -230,7 +232,9 @@ interface MemberFormStore {
   setError: (error: string | null) => void;
   setCreatedMemberId: (id: string | null) => void;
   setCreatedMemberReference: (reference: string | null) => void;
+  markAsSubmitted: (id: string, reference: string | null, photoUrl: string | null) => void;
   resetForm: () => void;
+  clearSubmission: () => void;
   getFormDataForSubmission: () => Record<string, string | undefined>;
 }
 
@@ -247,6 +251,8 @@ export const useMemberFormStore = create<MemberFormStore>()(
         error: null,
         createdMemberId: null,
         createdMemberReference: null,
+        submittedData: null,
+        submittedPhoto: null,
         
         // Actions
         setFormData: (data) =>
@@ -290,6 +296,23 @@ export const useMemberFormStore = create<MemberFormStore>()(
         setCreatedMemberReference: (reference) =>
           set({ createdMemberReference: reference }, false, 'setCreatedMemberReference'),
         
+        markAsSubmitted: (id, reference, photoUrl) =>
+          set(
+            (state) => ({
+              submittedData: { ...state.formData },
+              submittedPhoto: photoUrl,
+              createdMemberId: id,
+              createdMemberReference: reference,
+              isSubmitting: false,
+              isSubmitted: true,
+              // Reset le formulaire immédiatement
+              formData: initialFormData,
+              currentStep: 0,
+            }),
+            false,
+            'markAsSubmitted'
+          ),
+        
         resetForm: () =>
           set(
             {
@@ -300,9 +323,24 @@ export const useMemberFormStore = create<MemberFormStore>()(
               error: null,
               createdMemberId: null,
               createdMemberReference: null,
+              submittedData: null,
+              submittedPhoto: null,
             },
             false,
             'resetForm'
+          ),
+        
+        clearSubmission: () =>
+          set(
+            {
+              isSubmitted: false,
+              submittedData: null,
+              submittedPhoto: null,
+              createdMemberId: null,
+              createdMemberReference: null,
+            },
+            false,
+            'clearSubmission'
           ),
         
         // Convertir les données du formulaire pour l'envoi à l'API
@@ -328,6 +366,11 @@ export const useMemberFormStore = create<MemberFormStore>()(
         partialize: (state) => ({
           formData: state.formData,
           currentStep: state.currentStep,
+          isSubmitted: state.isSubmitted,
+          submittedData: state.submittedData,
+          submittedPhoto: state.submittedPhoto,
+          createdMemberId: state.createdMemberId,
+          createdMemberReference: state.createdMemberReference,
         }),
       }
     ),

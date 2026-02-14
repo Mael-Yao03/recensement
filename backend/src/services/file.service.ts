@@ -1,23 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, QueryRunner } from 'typeorm';
-import * as fs from 'fs';
-import * as path from 'path';
+import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
+import { v2 as cloudinary, UploadApiResponse } from 'cloudinary';
 import { Image, ImageType } from '../entities/image.entity';
 
 @Injectable()
 export class FileService {
-  private readonly picturesDir = path.join(__dirname, '..', '..', 'pictures');
-
   constructor(
     @InjectRepository(Image)
     private imageRepository: Repository<Image>,
+    private configService: ConfigService,
   ) {
-    // Créer le dossier pictures s'il n'existe pas
-    if (!fs.existsSync(this.picturesDir)) {
-      fs.mkdirSync(this.picturesDir, { recursive: true });
-    }
+    // Configurer Cloudinary
+    cloudinary.config({
+      cloud_name: this.configService.get<string>('CLOUDINARY_CLOUD_NAME'),
+      api_key: this.configService.get<string>('CLOUDINARY_API_KEY'),
+      api_secret: this.configService.get<string>('CLOUDINARY_API_SECRET'),
+    });
   }
 
   /**
@@ -28,8 +29,45 @@ export class FileService {
   }
 
   /**
-   * Sauvegarde une image depuis une chaîne base64 et crée l'entrée en BD
-   * @param base64Data Données de l'image en base64
+   * Upload une image sur Cloudinary depuis une chaîne base64
+   */
+  private async uploadToCloudinary(
+    base64Data: string,
+  ): Promise<UploadApiResponse> {
+    const folder = this.configService.get<string>('CLOUDINARY_FOLDER') || 'transfiguration';
+    return new Promise((resolve, reject) => {
+      cloudinary.uploader.upload(
+        base64Data,
+        {
+          folder,
+          resource_type: 'image',
+          transformation: [
+            { width: 800, height: 800, crop: 'limit' },
+            { quality: 'auto', fetch_format: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result!);
+        },
+      );
+    });
+  }
+
+  /**
+   * Supprime une image de Cloudinary par son public_id
+   */
+  private async deleteFromCloudinary(publicId: string): Promise<void> {
+    try {
+      await cloudinary.uploader.destroy(publicId);
+    } catch (error) {
+      console.error('Erreur lors de la suppression Cloudinary:', error);
+    }
+  }
+
+  /**
+   * Sauvegarde une image sur Cloudinary et crée l'entrée en BD
+   * @param base64Data Données de l'image en base64 (data:image/...;base64,...)
    * @param personId ID de la personne associée
    * @param imageType Type d'image
    * @returns L'entité Image créée ou null
@@ -45,39 +83,51 @@ export class FileService {
     }
 
     try {
-      // Extraire le type MIME et les données
-      const matches = base64Data.match(/^data:image\/(\w+);base64,(.+)$/);
-      if (!matches) {
-        return null;
+      const isProd = this.configService.get<string>('NODE_ENV') === 'production';
+
+      // En dev, on ne fait pas d'upload Cloudinary, on utilise un avatar
+      if (!isProd) {
+        const avatarUrl = `https://api.dicebear.com/9.x/toon-head/svg?seed=${personId}`;
+        const imageData = {
+          imageType,
+          fileName: this.generateSlug(),
+          filePath: avatarUrl,
+          publicId: null as any,
+          mimeType: 'image/svg+xml',
+          fileSize: 0,
+          personId,
+        };
+
+        if (queryRunner) {
+          const image = queryRunner.manager.create(Image, imageData);
+          return queryRunner.manager.save(image);
+        }
+
+        const image = this.imageRepository.create(imageData);
+        return this.imageRepository.save(image);
       }
 
-      const extension = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-      const imageData = matches[2];
-      const slug = this.generateSlug();
-      const fileName = `${slug}.${extension}`;
-      const filePath = path.join(this.picturesDir, fileName);
-
-      // Convertir base64 en buffer et sauvegarder
-      const buffer = Buffer.from(imageData, 'base64');
-      fs.writeFileSync(filePath, buffer);
+      // En production, upload sur Cloudinary
+      const result = await this.uploadToCloudinary(base64Data);
 
       // Créer l'entrée en base de données
-      const imageData_ = {
+      const imageData = {
         imageType,
-        fileName,
-        filePath: `pictures/${fileName}`,
-        mimeType: `image/${extension}`,
-        fileSize: buffer.length,
+        fileName: result.original_filename || this.generateSlug(),
+        filePath: result.secure_url,
+        publicId: result.public_id,
+        mimeType: `image/${result.format}`,
+        fileSize: result.bytes,
         personId,
       };
 
       // Utiliser le queryRunner si fourni (même transaction)
       if (queryRunner) {
-        const image = queryRunner.manager.create(Image, imageData_);
+        const image = queryRunner.manager.create(Image, imageData);
         return queryRunner.manager.save(image);
       }
 
-      const image = this.imageRepository.create(imageData_);
+      const image = this.imageRepository.create(imageData);
       return this.imageRepository.save(image);
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de l'image:", error);
@@ -105,7 +155,7 @@ export class FileService {
   }
 
   /**
-   * Supprime une image par son ID
+   * Supprime une image par son ID (Cloudinary + BD)
    */
   async deleteImage(imageId: string): Promise<boolean> {
     const image = await this.imageRepository.findOne({ where: { id: imageId } });
@@ -114,9 +164,9 @@ export class FileService {
     }
 
     try {
-      const absolutePath = path.join(__dirname, '..', '..', image.filePath);
-      if (fs.existsSync(absolutePath)) {
-        fs.unlinkSync(absolutePath);
+      // Supprimer de Cloudinary si publicId existe
+      if (image.publicId) {
+        await this.deleteFromCloudinary(image.publicId);
       }
       await this.imageRepository.remove(image);
       return true;
@@ -134,12 +184,5 @@ export class FileService {
     for (const image of images) {
       await this.deleteImage(image.id);
     }
-  }
-
-  /**
-   * Obtient le chemin absolu d'une image
-   */
-  getAbsolutePath(relativePath: string): string {
-    return path.join(__dirname, '..', '..', relativePath);
   }
 }

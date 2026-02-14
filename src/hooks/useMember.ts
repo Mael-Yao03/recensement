@@ -81,11 +81,8 @@ export function useCreateMember() {
   const navigate = useNavigate();
   const { 
     setIsSubmitting, 
-    setIsSubmitted, 
     setError, 
-    setCreatedMemberId,
-    setCreatedMemberReference,
-    resetForm,
+    markAsSubmitted,
     getFormDataForSubmission 
   } = useMemberFormStore();
 
@@ -101,10 +98,13 @@ export function useCreateMember() {
       setError(null);
     },
     onSuccess: (data) => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setCreatedMemberId(data.id);
-      setCreatedMemberReference(data.reference || null);
+      // Extraire l'URL de la photo depuis la réponse
+      const photoUrl = data.images?.length > 0 
+        ? data.images.find((img: any) => img.imageType === 'photo_identite')?.filePath || null 
+        : null;
+      
+      // Snapshot les données, reset le form, marquer comme soumis
+      markAsSubmitted(data.id, data.reference || null, photoUrl);
       
       // Invalider le cache des membres
       queryClient.invalidateQueries({ queryKey: memberQueryKeys.all });

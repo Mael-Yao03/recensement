@@ -32,7 +32,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
   console.log(`🚀 Backend démarré sur http://localhost:${port}`);
-  console.log(`📁 Images servies depuis /pictures`);
+  console.log(`☁️  Images stockées sur Cloudinary`);
   console.log(`📊 API Membres: /api/members`);
   console.log(`👶 API Enfants: /api/children`);
 }

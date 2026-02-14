@@ -66,6 +66,8 @@ interface ChildFormStore {
   isSubmitted: boolean;
   error: string | null;
   createdChildId: string | null;
+  submittedData: ChildFormData | null;
+  submittedPhoto: string | null;
   
   // Actions
   setFormData: (data: Partial<ChildFormData>) => void;
@@ -76,7 +78,9 @@ interface ChildFormStore {
   setIsSubmitted: (isSubmitted: boolean) => void;
   setError: (error: string | null) => void;
   setCreatedChildId: (id: string | null) => void;
+  markAsSubmitted: (id: string, photoUrl: string | null) => void;
   resetForm: () => void;
+  clearSubmission: () => void;
   getFormDataForSubmission: () => Record<string, string | undefined>;
 }
 
@@ -92,6 +96,8 @@ export const useChildFormStore = create<ChildFormStore>()(
         isSubmitted: false,
         error: null,
         createdChildId: null,
+        submittedData: null,
+        submittedPhoto: null,
         
         // Actions
         setFormData: (data) =>
@@ -132,6 +138,21 @@ export const useChildFormStore = create<ChildFormStore>()(
         setCreatedChildId: (id) =>
           set({ createdChildId: id }, false, 'setCreatedChildId'),
         
+        markAsSubmitted: (id, photoUrl) =>
+          set(
+            (state) => ({
+              submittedData: { ...state.formData },
+              submittedPhoto: photoUrl,
+              createdChildId: id,
+              isSubmitting: false,
+              isSubmitted: true,
+              formData: initialFormData,
+              currentStep: 0,
+            }),
+            false,
+            'markAsSubmitted'
+          ),
+        
         resetForm: () =>
           set(
             {
@@ -141,9 +162,23 @@ export const useChildFormStore = create<ChildFormStore>()(
               isSubmitted: false,
               error: null,
               createdChildId: null,
+              submittedData: null,
+              submittedPhoto: null,
             },
             false,
             'resetForm'
+          ),
+        
+        clearSubmission: () =>
+          set(
+            {
+              isSubmitted: false,
+              submittedData: null,
+              submittedPhoto: null,
+              createdChildId: null,
+            },
+            false,
+            'clearSubmission'
           ),
         
         // Convertir les données du formulaire pour l'envoi à l'API
@@ -166,6 +201,10 @@ export const useChildFormStore = create<ChildFormStore>()(
         partialize: (state) => ({
           formData: state.formData,
           currentStep: state.currentStep,
+          isSubmitted: state.isSubmitted,
+          submittedData: state.submittedData,
+          submittedPhoto: state.submittedPhoto,
+          createdChildId: state.createdChildId,
         }),
       }
     ),

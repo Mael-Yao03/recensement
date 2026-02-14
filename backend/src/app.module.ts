@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { ServeStaticModule } from '@nestjs/serve-static';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { join } from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -113,10 +111,6 @@ import { JwtStrategy, JwtAuthGuard, PermissionsGuard } from './guards';
       Role,
       Permission,
     ]),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'pictures'),
-      serveRoot: '/pictures',
-    }),
   ],
   controllers: [
     AppController,

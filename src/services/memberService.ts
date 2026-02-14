@@ -6,6 +6,7 @@ export interface ImageData {
   imageType: string;
   fileName: string;
   filePath: string;
+  publicId?: string;
   mimeType: string;
   fileSize: number;
   createdAt: string;

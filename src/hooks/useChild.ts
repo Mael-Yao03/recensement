@@ -80,10 +80,8 @@ export function useCreateChild() {
   const navigate = useNavigate();
   const { 
     setIsSubmitting, 
-    setIsSubmitted, 
     setError, 
-    setCreatedChildId,
-    resetForm,
+    markAsSubmitted,
     getFormDataForSubmission 
   } = useChildFormStore();
 
@@ -99,9 +97,13 @@ export function useCreateChild() {
       setError(null);
     },
     onSuccess: (data) => {
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setCreatedChildId(data.id);
+      // Extraire l'URL de la photo depuis la réponse
+      const photoUrl = data.images?.length > 0 
+        ? data.images.find((img: any) => img.imageType === 'photo_identite')?.filePath || null 
+        : null;
+      
+      // Snapshot les données, reset le form, marquer comme soumis
+      markAsSubmitted(data.id, photoUrl);
       
       // Invalider le cache des enfants
       queryClient.invalidateQueries({ queryKey: childQueryKeys.all });
