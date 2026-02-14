@@ -149,6 +149,7 @@ const ENDPOINTS = {
   BY_ID: (id: string) => `/api/members/${id}`,
   BY_SLUG: (slug: string) => `/api/members/slug/${slug}`,
   STATS: '/api/members/stats',
+  VERIFY: '/api/members/verify',
 } as const;
 
 // Service pour les membres
@@ -206,6 +207,15 @@ export const memberService = {
    */
   async getStats(): Promise<ApiResponse<MemberStats>> {
     return apiGet<MemberStats>(ENDPOINTS.STATS);
+  },
+
+  /**
+   * Vérifier l'identité d'un membre par référence et téléphone
+   * @param reference Référence du membre (sur sa carte)
+   * @param telephone Numéro de téléphone
+   */
+  async verify(reference: string, telephone: string): Promise<ApiResponse<Member>> {
+    return apiPost<Member, { reference: string; telephone: string }>(ENDPOINTS.VERIFY, { reference, telephone });
   },
 };
 

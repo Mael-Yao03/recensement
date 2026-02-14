@@ -37,6 +37,38 @@ export class MemberController {
     }
   }
 
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  async verify(
+    @Body() body: { reference: string; telephone: string },
+  ) {
+    if (!body.reference || !body.telephone) {
+      throw new BadRequestException({
+        success: false,
+        message: 'La référence et le numéro de téléphone sont requis',
+      });
+    }
+
+    const member = await this.memberService.findByReferenceAndPhone(
+      body.reference.trim().toUpperCase(),
+      body.telephone.trim(),
+    );
+
+    if (!member) {
+      throw new NotFoundException({
+        success: false,
+        message:
+          'Aucun membre trouvé avec cette référence et ce numéro de téléphone',
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Vérification réussie',
+      data: member,
+    };
+  }
+
   @Get()
   async findAll() {
     const members = await this.memberService.findAll();
@@ -91,18 +123,28 @@ export class MemberController {
     @Param('id') id: string,
     @Body() updateMemberDto: Partial<CreateMemberDto>,
   ) {
-    const member = await this.memberService.update(id, updateMemberDto);
-    if (!member) {
-      throw new NotFoundException({
+    try {
+      const member = await this.memberService.update(id, updateMemberDto);
+      if (!member) {
+        throw new NotFoundException({
+          success: false,
+          message: 'Membre non trouvé',
+        });
+      }
+      return {
+        success: true,
+        message: 'Membre mis à jour avec succès',
+        data: member,
+      };
+    } catch (error) {
+      if (error instanceof NotFoundException) throw error;
+      console.error('Erreur update membre:', error);
+      throw new BadRequestException({
         success: false,
-        message: 'Membre non trouvé',
+        message: 'Erreur lors de la mise à jour du membre',
+        error: error.message,
       });
     }
-    return {
-      success: true,
-      message: 'Membre mis à jour avec succès',
-      data: member,
-    };
   }
 
   @Delete(':id')

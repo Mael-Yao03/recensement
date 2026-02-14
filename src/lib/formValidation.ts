@@ -30,7 +30,7 @@ export const memberStep2RequiredFields = [
 // Step 3: Parcours spirituel - Required fields
 export const memberStep3RequiredFields = [
   { field: 'baptemeEau', label: 'Baptême d\'eau' },
-  { field: 'baptemeSaintEsprit', label: 'Baptême du Saint-Esprit' },
+  { field: 'baptiseSaintEsprit', label: 'Baptême du Saint-Esprit' },
 ];
 
 // Step 4: Vie ecclésiale - Required fields

@@ -103,11 +103,13 @@ const groupesDepartements = [
   "Jeunesse",
   "Intercession",
   "Évangélisation",
-  "Accueil",
+  "Ordre & Accueil",
   "AOC",
   "ECODIM",
   "HAC",
   "MIFA",
+  "Communication",
+  "Technique"
 ]
 
 // Step 1: General Information
@@ -619,23 +621,23 @@ export function Step3Spiritual({ formData, updateFormData, errors }: StepProps) 
         </div>
 
         {/* Baptême Saint-Esprit */}
-        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "baptemeSaintEsprit") ? "border-destructive" : "border-border"}`}>
+        <div className={`space-y-4 p-4 rounded-lg bg-muted/30 border ${hasError(errors, "baptiseSaintEsprit") ? "border-destructive" : "border-border"}`}>
           <h3 className="font-semibold text-lg">Baptême dans le Saint-Esprit <span className="text-destructive">*</span></h3>
           <div className="space-y-3">
             <Radio.Group
-              value={formData.baptemeSaintEsprit as string || ""}
-              onChange={(e) => updateFormData("baptemeSaintEsprit", e.target.value)}
+              value={formData.baptiseSaintEsprit as string || ""}
+              onChange={(e) => updateFormData("baptiseSaintEsprit", e.target.value)}
               className="flex gap-4"
             >
               <Radio value="oui">Oui</Radio>
               <Radio value="non">Non</Radio>
             </Radio.Group>
-            {hasError(errors, "baptemeSaintEsprit") && (
-              <p className="text-sm text-destructive">{getErrorMessage(errors, "baptemeSaintEsprit")}</p>
+            {hasError(errors, "baptiseSaintEsprit") && (
+              <p className="text-sm text-destructive">{getErrorMessage(errors, "baptiseSaintEsprit")}</p>
             )}
           </div>
 
-          {formData.baptemeSaintEsprit === "oui" && (
+          {formData.baptiseSaintEsprit === "oui" && (
             <Row gutter={[24, 24]}>
               <Col xs={24} md={12}>
                 <div className="space-y-2">

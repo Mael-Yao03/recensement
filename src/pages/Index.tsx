@@ -53,9 +53,9 @@ const Index = () => {
                   </Button>
 
                   <Button asChild variant="outline" size="sm" className="shadow-md hover:shadow-lg transition-all">
-                    <a href="#examples">
+                    <Link to="/update-member">
                       Modifier vos informations
-                    </a>
+                    </Link>
                   </Button>
                 </div>
               </div>

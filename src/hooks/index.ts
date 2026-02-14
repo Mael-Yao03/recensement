@@ -11,6 +11,7 @@ export {
   useCreateMember,
   useUpdateMember,
   useDeleteMember,
+  useVerifyMember,
   memberQueryKeys,
 } from './useMember';
 

@@ -106,7 +106,7 @@ export class MemberService {
 
       // Répartir les champs
       for (const [key, value] of Object.entries(createMemberDto)) {
-        if (key === 'photo' || key === 'memberDetails') continue;
+        if (key === 'photo' || key === 'memberDetails' || key === 'id' || key === 'personId') continue;
         
         // Convertir les champs tableau si nécessaire
         const processedValue = ARRAY_FIELDS.includes(key)
@@ -175,6 +175,26 @@ export class MemberService {
     });
   }
 
+  async findByReferenceAndPhone(
+    reference: string,
+    telephone: string,
+  ): Promise<Person | null> {
+    const person = await this.personRepository.findOne({
+      where: { reference, type: 'member' },
+      relations: ['memberDetails', 'images'],
+    });
+
+    if (!person) return null;
+
+    // Vérifier le numéro de téléphone dans memberDetails
+    const memberPhone = person.memberDetails?.telephone?.trim();
+    if (!memberPhone || memberPhone !== telephone) {
+      return null;
+    }
+
+    return person;
+  }
+
   async update(
     id: string,
     updateMemberDto: Partial<CreateMemberDto>,
@@ -194,7 +214,7 @@ export class MemberService {
       const memberDetailsData: Partial<MemberDetails> = {};
 
       for (const [key, value] of Object.entries(updateMemberDto)) {
-        if (key === 'photo' || key === 'memberDetails') continue;
+        if (key === 'photo' || key === 'memberDetails' || key === 'id' || key === 'personId') continue;
         
         // Convertir les champs tableau si nécessaire
         const processedValue = ARRAY_FIELDS.includes(key)

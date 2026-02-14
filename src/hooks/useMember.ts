@@ -3,6 +3,7 @@ import { memberService, Member, CreateMemberPayload, MemberStats } from '../serv
 import { useMemberFormStore } from '../stores';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import { useState } from 'react';
 
 // Clés de query pour le cache
 export const memberQueryKeys = {
@@ -168,6 +169,35 @@ export function useDeleteMember() {
       message.error(`Erreur: ${error.message}`);
     },
   });
+}
+
+/**
+ * Hook pour vérifier l'identité d'un membre par référence et téléphone
+ */
+export function useVerifyMember() {
+  const [verifiedMember, setVerifiedMember] = useState<Member | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async ({ reference, telephone }: { reference: string; telephone: string }) => {
+      const response = await memberService.verify(reference, telephone);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setVerifiedMember(data);
+      message.success('Identité vérifiée avec succès !');
+    },
+    onError: (error: any) => {
+      setVerifiedMember(null);
+      const errorMessage = error?.response?.data?.message || 'Référence ou numéro de téléphone incorrect.';
+      message.error(errorMessage);
+    },
+  });
+
+  return {
+    ...mutation,
+    verifiedMember,
+    resetVerification: () => setVerifiedMember(null),
+  };
 }
 
 /**

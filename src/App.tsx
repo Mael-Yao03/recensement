@@ -8,6 +8,7 @@ import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 import RegistrationForm from "./pages/RegistrationForm";
 import ChildrenRegistrationForm from "./pages/ChildrenRegistrationForm";
+import UpdateMember from "./pages/UpdateMember";
 
 // Admin imports
 import { AdminLayout, ProtectedRoute } from "./components/admin";
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/registration" element={<RegistrationForm />} />
           <Route path="/registration-children" element={<ChildrenRegistrationForm />} />
+          <Route path="/update-member" element={<UpdateMember />} />
           <Route path="/thank-you" element={<ThankYou />} />
 
           {/* Routes Admin */}
