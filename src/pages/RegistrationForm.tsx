@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,6 +23,7 @@ import {
   ArrowRight,
   FileText,
   Loader2,
+  Send
 } from "lucide-react"
 import {
   Step1GeneralInfo,
@@ -137,10 +138,17 @@ export default function RegistrationForm() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
-  // Rediriger vers la page de remerciement si soumis avec succès
+  // Suivre si la soumission a eu lieu dans cette session
+  const wasSubmittedOnMount = useRef(isSubmitted)
+
+  // Rediriger vers la page de remerciement uniquement après une nouvelle soumission
   useEffect(() => {
-    if (isSubmitted) {
+    if (isSubmitted && !wasSubmittedOnMount.current) {
       navigate("/thank-you")
+    }
+    // Après le premier render, ne plus bloquer la redirection
+    if (wasSubmittedOnMount.current) {
+      wasSubmittedOnMount.current = false
     }
   }, [isSubmitted, navigate])
 
@@ -183,7 +191,7 @@ export default function RegistrationForm() {
                 Nouvel enregistrement
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Durée estimée : 10-15 minutes
+                Durée estimée : 5-10 minutes
               </p>
             </div>
 
@@ -393,11 +401,11 @@ export default function RegistrationForm() {
                     {createMemberMutation.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        Envoi en cours...
+                        Envoi...
                       </>
                     ) : (
                       <>
-                        <Check className="w-4 h-4" />
+                        <Send className="w-4 h-4" />
                         Envoyer
                       </>
                     )}

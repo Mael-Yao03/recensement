@@ -48,7 +48,7 @@ api.interceptors.response.use(
           localStorage.removeItem('auth_token');
           localStorage.removeItem('auth-storage');
           // Ne pas rediriger automatiquement si on est déjà sur la page login ou sur une page publique
-          if (!window.location.pathname.includes('/admin/login') && !window.location.pathname.includes('/update-member')) {
+          if (!window.location.pathname.includes('/admin/login') && !window.location.pathname.includes('/update-member') && !window.location.pathname.includes('/update-child')) {
             window.location.href = '/admin/login';
           }
           break;

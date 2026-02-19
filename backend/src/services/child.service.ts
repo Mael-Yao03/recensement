@@ -28,6 +28,35 @@ export class ChildService {
     private dataSource: DataSource,
   ) {}
 
+  /**
+   * Génère une référence unique basée sur les initiales du nom
+   * Format: ABC-123456 (initiales + 6 chiffres aléatoires)
+   */
+  private async generateReference(nomPrenoms: string): Promise<string> {
+    const initials = nomPrenoms
+      .split(' ')
+      .filter((word) => word.length > 0)
+      .map((word) => word.charAt(0).toUpperCase())
+      .join('')
+      .substring(0, 3)
+      .padEnd(2, 'X');
+
+    let reference: string;
+    let exists = true;
+
+    while (exists) {
+      const randomNumber = Math.floor(100000 + Math.random() * 900000);
+      reference = `${initials}-${randomNumber}`;
+
+      const existing = await this.personRepository.findOne({
+        where: { reference },
+      });
+      exists = !!existing;
+    }
+
+    return reference!;
+  }
+
   async create(createChildDto: CreateChildDto): Promise<Person> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
@@ -36,10 +65,16 @@ export class ChildService {
     try {
       const slug = this.fileService.generateSlug();
 
+      // Générer la référence unique
+      const reference = await this.generateReference(
+        createChildDto.nomPrenoms || 'ENFANT',
+      );
+
       // Séparer les champs Person et ChildDetails
       const personData: Partial<Person> = {
         type: 'child',
         slug,
+        reference,
       };
       const childDetailsData: Partial<ChildDetails> = {};
 
@@ -188,6 +223,26 @@ export class ChildService {
 
   async count(): Promise<number> {
     return this.personRepository.count({ where: { type: 'child' } });
+  }
+
+  async findByReferenceAndContact(
+    reference: string,
+    contactParents: string,
+  ): Promise<Person | null> {
+    const person = await this.personRepository.findOne({
+      where: { reference, type: 'child' },
+      relations: ['childDetails', 'images'],
+    });
+
+    if (!person) return null;
+
+    // Vérifier le contact des parents dans childDetails
+    const parentContact = person.childDetails?.contactParents?.trim();
+    if (!parentContact || parentContact !== contactParents) {
+      return null;
+    }
+
+    return person;
   }
 
   async getStats(): Promise<{

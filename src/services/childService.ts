@@ -23,6 +23,7 @@ export interface Child {
   id: string;
   type: 'child';
   slug: string;
+  reference?: string;
   nomPrenoms: string;
   sexe: string;
   nationalite?: string;
@@ -80,6 +81,7 @@ const ENDPOINTS = {
   BY_ID: (id: string) => `/api/children/${id}`,
   BY_SLUG: (slug: string) => `/api/children/slug/${slug}`,
   STATS: '/api/children/stats',
+  VERIFY: '/api/children/verify',
 } as const;
 
 // Service pour les enfants
@@ -137,6 +139,13 @@ export const childService = {
    */
   async getStats(): Promise<ApiResponse<ChildStats>> {
     return apiGet<ChildStats>(ENDPOINTS.STATS);
+  },
+
+  /**
+   * Vérifier l'identité d'un enfant par référence et contact parental
+   */
+  async verify(reference: string, contactParents: string): Promise<ApiResponse<Child>> {
+    return apiPost<Child, { reference: string; contactParents: string }>(ENDPOINTS.VERIFY, { reference, contactParents });
   },
 };
 

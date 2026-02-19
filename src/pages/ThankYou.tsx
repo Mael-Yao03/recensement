@@ -204,6 +204,7 @@ const ThankYou = () => {
   // Stores enfants
   const childIsSubmitted = useChildFormStore((state) => state.isSubmitted);
   const childCreatedId = useChildFormStore((state) => state.createdChildId);
+  const childCreatedReference = useChildFormStore((state) => state.createdChildReference);
   const childSubmittedData = useChildFormStore((state) => state.submittedData);
   const childSubmittedPhoto = useChildFormStore((state) => state.submittedPhoto);
   const clearChildSubmission = useChildFormStore((state) => state.clearSubmission);
@@ -215,7 +216,7 @@ const ThankYou = () => {
 
   const submittedData = isMemberSubmission ? memberSubmittedData : childSubmittedData;
   const photoUrl = isMemberSubmission ? memberSubmittedPhoto : childSubmittedPhoto;
-  const reference = isMemberSubmission ? memberCreatedReference : null;
+  const reference = isMemberSubmission ? memberCreatedReference : childCreatedReference;
   const createdId = isMemberSubmission ? memberCreatedId : childCreatedId;
   const type = isMemberSubmission ? "membre" : "enfant";
   const sections = isMemberSubmission ? memberSections : childSections;
@@ -502,7 +503,7 @@ const ThankYou = () => {
                   {/* Infos principales */}
                   <div className="flex-1 text-center sm:text-left">
                     <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                      Récépissé d'inscription
+                      Récapitulatif des réponses
                     </h2>
                     {reference && (
                       <p className="text-lg font-bold text-primary mb-2">
@@ -573,14 +574,14 @@ const ThankYou = () => {
                 Télécharger en PDF
               </Button>
 
-              {type === "membre" && createdId && (
+              {/* {type === "membre" && createdId && ( */}
                 <Button asChild variant="outline" size="lg">
-                  <Link to="/update-member" className="inline-flex items-center gap-2">
+                  <Link to={type === "membre" ? "/update-member" : "/update-child"} className="inline-flex items-center gap-2">
                     <Edit className="w-5 h-5" />
                     Modifier mes informations
                   </Link>
                 </Button>
-              )}
+              {/* )} */}
 
               {/* <Button
                 size="lg"
@@ -592,12 +593,12 @@ const ThankYou = () => {
                 </Link>
               </Button> */}
 
-              {/* <Button asChild variant="ghost" size="lg">
+              <Button asChild variant="ghost" size="lg">
                 <Link to="/" className="inline-flex items-center gap-2">
                   <Home className="w-5 h-5" />
                   Accueil
                 </Link>
-              </Button> */}
+              </Button>
             </div>
 
             {/* Footer */}

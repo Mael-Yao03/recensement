@@ -1,8 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { childService, Child, CreateChildPayload, ChildStats } from '../services';
 import { useChildFormStore } from '../stores';
+import { useMemberFormStore } from '../stores';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
+import { useState } from 'react';
 
 // Clés de query pour le cache
 export const childQueryKeys = {
@@ -103,7 +105,10 @@ export function useCreateChild() {
         : null;
       
       // Snapshot les données, reset le form, marquer comme soumis
-      markAsSubmitted(data.id, photoUrl);
+      markAsSubmitted(data.id, data.reference || null, photoUrl);
+      
+      // Nettoyer la soumission de l'autre store pour éviter les conflits
+      useMemberFormStore.getState().clearSubmission();
       
       // Invalider le cache des enfants
       queryClient.invalidateQueries({ queryKey: childQueryKeys.all });
@@ -168,6 +173,35 @@ export function useDeleteChild() {
       message.error(`Erreur: ${error.message}`);
     },
   });
+}
+
+/**
+ * Hook pour vérifier l'identité d'un enfant par référence et contact parental
+ */
+export function useVerifyChild() {
+  const [verifiedChild, setVerifiedChild] = useState<Child | null>(null);
+
+  const mutation = useMutation({
+    mutationFn: async ({ reference, contactParents }: { reference: string; contactParents: string }) => {
+      const response = await childService.verify(reference, contactParents);
+      return response.data;
+    },
+    onSuccess: (data) => {
+      setVerifiedChild(data);
+      message.success('Identité vérifiée avec succès !');
+    },
+    onError: (error: any) => {
+      setVerifiedChild(null);
+      const errorMessage = error?.response?.data?.message || 'Référence ou contact parental incorrect.';
+      message.error(errorMessage);
+    },
+  });
+
+  return {
+    ...mutation,
+    verifiedChild,
+    resetVerification: () => setVerifiedChild(null),
+  };
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { memberService, Member, CreateMemberPayload, MemberStats } from '../services';
 import { useMemberFormStore } from '../stores';
+import { useChildFormStore } from '../stores';
 import { useNavigate } from 'react-router-dom';
 import { message } from 'antd';
 import { useState } from 'react';
@@ -105,6 +106,9 @@ export function useCreateMember() {
       
       // Snapshot les données, reset le form, marquer comme soumis
       markAsSubmitted(data.id, data.reference || null, photoUrl);
+      
+      // Nettoyer la soumission de l'autre store pour éviter les conflits
+      useChildFormStore.getState().clearSubmission();
       
       // Invalider le cache des membres
       queryClient.invalidateQueries({ queryKey: memberQueryKeys.all });

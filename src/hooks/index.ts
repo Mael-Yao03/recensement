@@ -25,5 +25,6 @@ export {
   useCreateChild,
   useUpdateChild,
   useDeleteChild,
+  useVerifyChild,
   childQueryKeys,
 } from './useChild';

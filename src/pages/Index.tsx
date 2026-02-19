@@ -27,7 +27,7 @@ const Index = () => {
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="space-y-6 animate-slide-up text-center">
 
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold leading-tight">
+                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-tight break-words">
                   <span className="text-primary">
                     Récensement Transfiguration
                   </span>
@@ -47,7 +47,7 @@ const Index = () => {
 
                   <Button asChild size="sm" className="shadow-lg hover:shadow-xl transition-all group">
                     <Link to="/registration-children" className="inline-flex items-center gap-2">
-                      Enregistrement Enfant
+                      Enregistrement ECODIM
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
@@ -55,6 +55,7 @@ const Index = () => {
                   <Button asChild variant="outline" size="sm" className="shadow-md hover:shadow-lg transition-all">
                     <Link to="/update-member">
                       Modifier vos informations
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
                 </div>

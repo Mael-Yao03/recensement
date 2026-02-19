@@ -37,6 +37,38 @@ export class ChildController {
     }
   }
 
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  async verify(
+    @Body() body: { reference: string; contactParents: string },
+  ) {
+    if (!body.reference || !body.contactParents) {
+      throw new BadRequestException({
+        success: false,
+        message: 'La référence et le contact des parents sont requis',
+      });
+    }
+
+    const child = await this.childService.findByReferenceAndContact(
+      body.reference.trim().toUpperCase(),
+      body.contactParents.trim(),
+    );
+
+    if (!child) {
+      throw new NotFoundException({
+        success: false,
+        message:
+          'Aucun enfant trouvé avec cette référence et ce contact parental',
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Vérification réussie',
+      data: child,
+    };
+  }
+
   @Get()
   async findAll() {
     const children = await this.childService.findAll();

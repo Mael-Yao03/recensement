@@ -66,6 +66,7 @@ interface ChildFormStore {
   isSubmitted: boolean;
   error: string | null;
   createdChildId: string | null;
+  createdChildReference: string | null;
   submittedData: ChildFormData | null;
   submittedPhoto: string | null;
   
@@ -78,7 +79,7 @@ interface ChildFormStore {
   setIsSubmitted: (isSubmitted: boolean) => void;
   setError: (error: string | null) => void;
   setCreatedChildId: (id: string | null) => void;
-  markAsSubmitted: (id: string, photoUrl: string | null) => void;
+  markAsSubmitted: (id: string, reference: string | null, photoUrl: string | null) => void;
   resetForm: () => void;
   clearSubmission: () => void;
   getFormDataForSubmission: () => Record<string, string | undefined>;
@@ -96,6 +97,7 @@ export const useChildFormStore = create<ChildFormStore>()(
         isSubmitted: false,
         error: null,
         createdChildId: null,
+        createdChildReference: null,
         submittedData: null,
         submittedPhoto: null,
         
@@ -138,12 +140,13 @@ export const useChildFormStore = create<ChildFormStore>()(
         setCreatedChildId: (id) =>
           set({ createdChildId: id }, false, 'setCreatedChildId'),
         
-        markAsSubmitted: (id, photoUrl) =>
+        markAsSubmitted: (id, reference, photoUrl) =>
           set(
             (state) => ({
               submittedData: { ...state.formData },
               submittedPhoto: photoUrl,
               createdChildId: id,
+              createdChildReference: reference,
               isSubmitting: false,
               isSubmitted: true,
               formData: initialFormData,
@@ -162,6 +165,7 @@ export const useChildFormStore = create<ChildFormStore>()(
               isSubmitted: false,
               error: null,
               createdChildId: null,
+              createdChildReference: null,
               submittedData: null,
               submittedPhoto: null,
             },
@@ -176,6 +180,7 @@ export const useChildFormStore = create<ChildFormStore>()(
               submittedData: null,
               submittedPhoto: null,
               createdChildId: null,
+              createdChildReference: null,
             },
             false,
             'clearSubmission'
@@ -205,6 +210,7 @@ export const useChildFormStore = create<ChildFormStore>()(
           submittedData: state.submittedData,
           submittedPhoto: state.submittedPhoto,
           createdChildId: state.createdChildId,
+          createdChildReference: state.createdChildReference,
         }),
       }
     ),
