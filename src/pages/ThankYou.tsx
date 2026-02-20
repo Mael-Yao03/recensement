@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useMemberFormStore, useChildFormStore } from "@/stores";
 import { jsPDF } from "jspdf";
 import LogoImg from "@/assets/trans.png";
+import { FaWhatsapp } from "react-icons/fa";
 
 // Convertir le logo en base64 pour l'intégrer dans le PDF
 function loadImageAsBase64(src: string): Promise<string> {
@@ -18,6 +19,45 @@ function loadImageAsBase64(src: string): Promise<string> {
       canvas.height = img.height;
       const ctx = canvas.getContext("2d");
       ctx?.drawImage(img, 0, 0);
+      resolve(canvas.toDataURL("image/png"));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+/**
+ * Charge une image et la recadre (object-fit: cover) aux dimensions cibles.
+ * Retourne un dataURL PNG prêt à être inséré dans jsPDF sans déformation.
+ */
+function loadImageCropped(src: string, targetW: number, targetH: number): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = targetW;
+      canvas.height = targetH;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("No canvas context")); return; }
+
+      // Calculer le crop "cover"
+      const srcAspect = img.width / img.height;
+      const dstAspect = targetW / targetH;
+
+      let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+      if (srcAspect > dstAspect) {
+        // Image plus large → couper les côtés
+        sw = img.height * dstAspect;
+        sx = (img.width - sw) / 2;
+      } else {
+        // Image plus haute → couper haut/bas
+        sh = img.width / dstAspect;
+        sy = (img.height - sh) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sw, sh, 0, 0, targetW, targetH);
       resolve(canvas.toDataURL("image/png"));
     };
     img.onerror = reject;
@@ -230,150 +270,217 @@ const ThankYou = () => {
     }
   };
 
+  // ─── Palette de couleurs du PDF ───────────────────────────────────────────
+  const COLORS = {
+    primary:    [30, 60, 130]   as [number, number, number],
+    primaryLight:[230, 237, 255] as [number, number, number],
+    accent:     [245, 180, 0]   as [number, number, number],
+    white:      [255, 255, 255] as [number, number, number],
+    gray100:    [248, 249, 252] as [number, number, number],
+    gray200:    [235, 238, 245] as [number, number, number],
+    gray400:    [160, 165, 180] as [number, number, number],
+    gray600:    [80,  90, 110]  as [number, number, number],
+    dark:       [25,  30,  45]  as [number, number, number],
+  };
+
   const handleDownloadPDF = async () => {
     if (!submittedData) return;
 
     try {
       const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageWidth  = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
 
-      // Marges
-      const marginLeft = 15;
-      const marginRight = 15;
-      const marginTop = 10;
-      const marginBottom = 15;
-      const headerHeight = 16;
+      // Mise en page
+      const marginLeft   = 14;
+      const marginRight  = 14;
+      const marginTop    = 0;         // géré par le bandeau
+      const marginBottom = 16;
       const contentWidth = pageWidth - marginLeft - marginRight;
-      const contentStartY = marginTop + headerHeight;
-      const maxY = pageHeight - marginBottom;
+      const HEADER_H     = 22;        // hauteur du bandeau supérieur
+      const FOOTER_H     = 10;
+      const contentStartY = HEADER_H + 4;
+      const maxY          = pageHeight - marginBottom - FOOTER_H;
 
-      let currentY = contentStartY;
+      let currentY    = contentStartY;
+      let pageNumber  = 1;
 
-      // Charger le logo en base64
+      // ── Chargement des images ──────────────────────────────────────────────
       let logoBase64: string | null = null;
-      try {
-        logoBase64 = await loadImageAsBase64(LogoImg);
-      } catch {
-        console.warn("Impossible de charger le logo");
+      try { logoBase64 = await loadImageAsBase64(LogoImg); } catch { /* ignore */ }
+
+      // Photo avec recadrage "cover" (3×4) — résolution canvas suffisante pour rendu net
+      const PHOTO_W_PX = 525;  // 35mm × 15 dpi-factor → rendu haute résolution
+      const PHOTO_H_PX = 700;  // ratio exact 3:4
+      let photoBase64: string | null = null;
+      if (photoUrl) {
+        try {
+          photoBase64 = await loadImageCropped(photoUrl, PHOTO_W_PX, PHOTO_H_PX);
+        } catch { /* ignore */ }
       }
 
-      // Dessiner l'en-tête sur la page courante
+      // ── Bandeau supérieur ──────────────────────────────────────────────────
       const drawHeader = () => {
-        const logoSize = 10;
-        const logoX = marginLeft;
-        const logoY = marginTop;
+        // Fond bleu foncé
+        pdf.setFillColor(...COLORS.primary);
+        pdf.rect(0, marginTop, pageWidth, HEADER_H, "F");
 
+        // Bande accent (trait doré en bas du bandeau)
+        pdf.setFillColor(...COLORS.accent);
+        pdf.rect(0, marginTop + HEADER_H - 1.2, pageWidth, 1.2, "F");
+
+        // Logo
+        const logoSize = 13;
+        const logoX = marginLeft;
+        const logoY = marginTop + (HEADER_H - 1.2 - logoSize) / 2;
         if (logoBase64) {
           pdf.addImage(logoBase64, "PNG", logoX, logoY, logoSize, logoSize);
         }
 
-        pdf.setFontSize(9);
+        // Nom de l'église
+        const churchLines = [
+          "ÉGLISE ÉVANGÉLIQUE DES ASSEMBLÉES DE DIEU",
+          "DES DEUX PLATEAUX AGBAN — TEMPLE LA TRANSFIGURATION",
+        ];
+        pdf.setFontSize(7);
         pdf.setFont("helvetica", "bold");
-        pdf.setTextColor(60, 60, 60);
-        const churchName = "ÉGLISE ÉVANGELIQUE DES ASSEMBLÉES DE DIEU DES DEUX PLATEAUX AGBAN TEMPLE LA TRANSFIGURATION";
-        const textX = logoX + logoSize + 3;
-        const textMaxWidth = pageWidth - textX - marginRight;
-        const textY = logoY + logoSize / 2 + 1.5;
-        pdf.text(churchName, textX, textY, { maxWidth: textMaxWidth });
+        pdf.setTextColor(...COLORS.white);
+        const textX = marginLeft + logoSize + 4;
+        pdf.text(churchLines[0], textX, marginTop + 7);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(6.5);
+        pdf.text(churchLines[1], textX, marginTop + 12);
 
-        pdf.setDrawColor(200, 200, 200);
-        pdf.setLineWidth(0.3);
-        pdf.line(marginLeft, contentStartY - 2, pageWidth - marginRight, contentStartY - 2);
+        // Numéro de page à droite
+        pdf.setFontSize(7);
+        pdf.setFont("helvetica", "normal");
+        pdf.setTextColor(200, 210, 240);
+        pdf.text(`Page ${pageNumber}`, pageWidth - marginRight, marginTop + 9, { align: "right" });
       };
 
-      // Vérifier si on a besoin d'une nouvelle page
+      // ── Pied de page ───────────────────────────────────────────────────────
+      const drawFooter = () => {
+        const footerY = pageHeight - FOOTER_H;
+        pdf.setDrawColor(...COLORS.gray200);
+        pdf.setLineWidth(0.3);
+        pdf.line(marginLeft, footerY, pageWidth - marginRight, footerY);
+
+        pdf.setFontSize(6.5);
+        pdf.setFont("helvetica", "italic");
+        pdf.setTextColor(...COLORS.gray400);
+        pdf.text(
+          "Document confidentiel — Usage exclusif du corps pastoral",
+          pageWidth / 2,
+          footerY + 4,
+          { align: "center" }
+        );
+        pdf.text(
+          `Généré le ${new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`,
+          pageWidth - marginRight,
+          footerY + 4,
+          { align: "right" }
+        );
+      };
+
+      // ── Gestion des sauts de page ──────────────────────────────────────────
       const ensureSpace = (neededHeight: number) => {
         if (currentY + neededHeight > maxY) {
+          drawFooter();
           pdf.addPage();
+          pageNumber++;
           drawHeader();
           currentY = contentStartY;
         }
       };
 
-      // === Page 1 : en-tête ===
+      // ═══════════════════════════════════════════════════════════════════════
+      // PAGE 1 — En-tête
+      // ═══════════════════════════════════════════════════════════════════════
       drawHeader();
 
-      // Charger la photo du membre en base64
-      let photoBase64: string | null = null;
-      if (photoUrl) {
-        try {
-          photoBase64 = await loadImageAsBase64(photoUrl);
-        } catch {
-          console.warn("Impossible de charger la photo");
-        }
-      }
+      // ── Bloc identité ──────────────────────────────────────────────────────
+      const PHOTO_W  = 35;   // mm dans le PDF — moyenne
+      const PHOTO_H  = 47;   // ratio exact 3:4 (35 × 4/3 ≈ 46.7 → 47)
+      const BLOCK_H  = PHOTO_H + 10;
 
-      // --- Bloc d'en-tête avec fond coloré ---
-      const headerBlockHeight = 40;
-      ensureSpace(headerBlockHeight + 10);
+      ensureSpace(BLOCK_H + 6);
 
-      // Fond bleu clair
-      pdf.setFillColor(230, 240, 255);
-      pdf.roundedRect(marginLeft, currentY, contentWidth, headerBlockHeight, 3, 3, "F");
+      // Fond carte
+      pdf.setFillColor(...COLORS.primaryLight);
+      pdf.roundedRect(marginLeft, currentY, contentWidth, BLOCK_H, 3, 3, "F");
 
-      // Photo à gauche
-      const photoX = marginLeft + 4;
-      const photoY = currentY + 4;
-      const photoW = 24;
-      const photoH = 32;
+      // Cadre blanc photo avec coins arrondis
+      const photoX = marginLeft + 5;
+      const photoY = currentY + 5;
+      pdf.setFillColor(...COLORS.white);
+      pdf.roundedRect(photoX - 1.5, photoY - 1.5, PHOTO_W + 3, PHOTO_H + 3, 3, 3, "F");
+      pdf.setDrawColor(...COLORS.gray200);
+      pdf.setLineWidth(0.5);
+      pdf.roundedRect(photoX - 1.5, photoY - 1.5, PHOTO_W + 3, PHOTO_H + 3, 3, 3, "S");
 
       if (photoBase64) {
-        // Fond blanc pour la photo
-        pdf.setFillColor(255, 255, 255);
-        pdf.roundedRect(photoX - 0.5, photoY - 0.5, photoW + 1, photoH + 1, 1, 1, "F");
-        pdf.addImage(photoBase64, "JPEG", photoX, photoY, photoW, photoH);
+        // Photo déjà recadrée "cover", on l'insère directement sans déformation
+        pdf.addImage(photoBase64, "PNG", photoX, photoY, PHOTO_W, PHOTO_H);
       } else {
-        // Placeholder gris
-        pdf.setFillColor(220, 220, 220);
-        pdf.roundedRect(photoX, photoY, photoW, photoH, 1, 1, "F");
-        pdf.setFontSize(7);
+        // Placeholder
+        pdf.setFillColor(220, 225, 235);
+        pdf.roundedRect(photoX, photoY, PHOTO_W, PHOTO_H, 1.5, 1.5, "F");
+        pdf.setFontSize(6);
         pdf.setFont("helvetica", "normal");
-        pdf.setTextColor(150, 150, 150);
-        pdf.text("Pas de photo", photoX + photoW / 2, photoY + photoH / 2, { align: "center" });
+        pdf.setTextColor(...COLORS.gray400);
+        pdf.text("Pas de\nphoto", photoX + PHOTO_W / 2, photoY + PHOTO_H / 2 - 2, { align: "center" });
       }
 
-      // Texte à droite de la photo
-      const infoX = photoX + photoW + 6;
-      let infoY = currentY + 9;
+      // Infos à droite de la photo
+      const infoX = photoX + PHOTO_W + 9;
+      let infoY   = photoY + 6;
 
-      // Titre "Récépissé d'inscription"
-      pdf.setFontSize(14);
+      // Titre du document
+      pdf.setFontSize(15);
       pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(30, 60, 130);
+      pdf.setTextColor(...COLORS.primary);
       pdf.text("Récapitulatif des réponses", infoX, infoY);
-      infoY += 7;
+      infoY += 8;
 
-      // Référence en badge coloré
+      // Badge type
+      const typeLabel = type === "membre" ? "MEMBRE" : "ECODIM";
+      pdf.setFillColor(...COLORS.accent);
+      const badgeW = pdf.getStringUnitWidth(typeLabel) * 8 / pdf.internal.scaleFactor + 6;
+      pdf.roundedRect(infoX, infoY - 4, badgeW, 6, 1.5, 1.5, "F");
+      pdf.setFontSize(7.5);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...COLORS.dark);
+      pdf.text(typeLabel, infoX + 3, infoY);
+      infoY += 8;
+
+      // Référence
       if (reference) {
-        pdf.setFillColor(30, 100, 180);
-        const refText = `Réf : ${reference}`;
         pdf.setFontSize(9);
         pdf.setFont("helvetica", "bold");
-        const refWidth = pdf.getTextWidth(refText) + 6;
-        pdf.roundedRect(infoX, infoY - 3.5, refWidth, 5.5, 1.5, 1.5, "F");
-        pdf.setTextColor(255, 255, 255);
-        pdf.text(refText, infoX + 3, infoY);
-        infoY += 7;
+        pdf.setTextColor(...COLORS.primary);
+        pdf.text(`Réf : ${reference}`, infoX, infoY);
+        infoY += 6;
       }
 
       // Nom complet
-      pdf.setFontSize(12);
+      pdf.setFontSize(13);
       pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(30, 30, 30);
-      pdf.text(submittedData?.nomPrenoms || "", infoX, infoY);
-      infoY += 5;
+      pdf.setTextColor(...COLORS.dark);
+      pdf.text(submittedData?.nomPrenoms || "—", infoX, infoY);
+      infoY += 6;
 
-      // Type + date
-      pdf.setFontSize(8);
+      // Date
+      pdf.setFontSize(7.5);
       pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(100, 100, 100);
+      pdf.setTextColor(...COLORS.gray600);
       const dateStr = new Date().toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-      pdf.text(`${type === "membre" ? "MEMBRE" : "ECODIM"} — Enregistré le ${dateStr}`, infoX, infoY);
+      pdf.text(`Enregistré le ${dateStr}`, infoX, infoY);
 
-      currentY += headerBlockHeight + 8;
+      currentY += BLOCK_H + 10;
 
-      // === Sections ===
+      // ═══════════════════════════════════════════════════════════════════════
+      // SECTIONS
+      // ═══════════════════════════════════════════════════════════════════════
       for (const section of sections) {
         const filledFields = section.fields.filter((field) => {
           const value = (submittedData as unknown as Record<string, string | string[]>)?.[field];
@@ -385,60 +492,105 @@ const ThankYou = () => {
 
         if (filledFields.length === 0) continue;
 
-        // Titre de section avec fond coloré
-        ensureSpace(14);
-        pdf.setFillColor(240, 245, 255);
-        pdf.roundedRect(marginLeft, currentY - 4, contentWidth, 8, 1.5, 1.5, "F");
-        pdf.setFontSize(10);
+        // ── Titre de section ───────────────────────────────────────────────
+        ensureSpace(12);
+
+        // Barre colorée à gauche
+        pdf.setFillColor(...COLORS.primary);
+        pdf.rect(marginLeft, currentY - 4.5, 2.5, 8.5, "F");
+
+        // Fond de titre
+        pdf.setFillColor(...COLORS.primaryLight);
+        pdf.rect(marginLeft + 2.5, currentY - 4.5, contentWidth - 2.5, 8.5, "F");
+
+        pdf.setFontSize(9);
         pdf.setFont("helvetica", "bold");
-        pdf.setTextColor(30, 60, 130);
-        pdf.text(section.title, marginLeft + 3, currentY);
+        pdf.setTextColor(...COLORS.primary);
+        pdf.text(section.title, marginLeft + 7, currentY);
         currentY += 7;
 
-        // Champs
-        let fieldIndex = 0;
-        for (const field of filledFields) {
-          const rawValue = (submittedData as unknown as Record<string, string | string[]>)?.[field];
-          const value = formatValue(rawValue);
-          const label = fieldLabels[field] || field;
+        // ── Champs en grille 2 colonnes ────────────────────────────────────
+        const colGap   = 6;
+        const colW     = (contentWidth - colGap) / 2;
 
-          // Calculer la hauteur nécessaire pour ce champ
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          const valueLines = pdf.splitTextToSize(value, contentWidth - 6);
-          const fieldHeight = 4 + valueLines.length * 4.5 + 3;
+        // let colIndex = 0;
+        // let rowStartY = currentY;
+        // let leftH = 0;
+        // let rightH = 0;
 
-          ensureSpace(fieldHeight);
-
-          // Fond alterné léger
-          if (fieldIndex % 2 === 0) {
-            pdf.setFillColor(248, 249, 252);
-            pdf.rect(marginLeft, currentY - 3, contentWidth, fieldHeight, "F");
-          }
-
-          // Label (normal, bleu-gris)
-          pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(80, 100, 130);
-          pdf.setFontSize(8);
-          pdf.text(label, marginLeft + 3, currentY);
-          currentY += 4;
-
-          // Valeur (gras, noir)
-          pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(30, 30, 30);
-          pdf.setFontSize(10);
-          const wrappedValue = pdf.splitTextToSize(value, contentWidth - 6);
-          pdf.text(wrappedValue, marginLeft + 3, currentY);
-          currentY += wrappedValue.length * 4.5 + 3;
-
-          fieldIndex++;
+        // Pré-calcul : grouper par paires
+        const pairs: Array<[string, string | undefined]> = [];
+        for (let i = 0; i < filledFields.length; i += 2) {
+          pairs.push([filledFields[i], filledFields[i + 1]]);
         }
 
-        currentY += 4;
+        for (let pairIdx = 0; pairIdx < pairs.length; pairIdx++) {
+          const [leftField, rightField] = pairs[pairIdx];
+
+          // Calculer hauteur max de la paire
+          const calcFieldH = (field: string) => {
+            const raw = (submittedData as unknown as Record<string, string | string[]>)?.[field];
+            const val = formatValue(raw);
+            pdf.setFontSize(9);
+            const lines = pdf.splitTextToSize(val, colW - 4);
+            return 4.5 + lines.length * 4.5 + 2;
+          };
+
+          const lH = calcFieldH(leftField);
+          const rH = rightField ? calcFieldH(rightField) : 0;
+          const pairH = Math.max(lH, rH) + 2;
+
+          ensureSpace(pairH);
+
+          // Fond alterné
+          if (pairIdx % 2 === 0) {
+            pdf.setFillColor(...COLORS.gray100);
+            pdf.rect(marginLeft, currentY - 1, contentWidth, pairH, "F");
+          }
+
+          // Séparateur vertical entre colonnes
+          pdf.setDrawColor(...COLORS.gray200);
+          pdf.setLineWidth(0.2);
+          pdf.line(marginLeft + colW + colGap / 2, currentY - 1, marginLeft + colW + colGap / 2, currentY + pairH - 1);
+
+          // Dessin des deux cellules
+          const drawCell = (field: string, x: number) => {
+            const raw = (submittedData as unknown as Record<string, string | string[]>)?.[field];
+            const val = formatValue(raw);
+            const label = fieldLabels[field] || field;
+
+            // Label
+            pdf.setFontSize(6.5);
+            pdf.setFont("helvetica", "normal");
+            pdf.setTextColor(...COLORS.gray400);
+            pdf.text(label.toUpperCase(), x + 2, currentY + 3);
+
+            // Valeur
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "bold");
+            pdf.setTextColor(...COLORS.dark);
+            const wrapped = pdf.splitTextToSize(val, colW - 4);
+            pdf.text(wrapped, x + 2, currentY + 8);
+          };
+
+          drawCell(leftField, marginLeft);
+          if (rightField) {
+            drawCell(rightField, marginLeft + colW + colGap);
+          }
+
+          currentY += pairH;
+        }
+
+        currentY += 5;
       }
 
+      // ── Pied de page final ─────────────────────────────────────────────────
+      drawFooter();
+
+      // ── Sauvegarde ─────────────────────────────────────────────────────────
       const nom = submittedData?.nomPrenoms?.replace(/\s+/g, "_") || "membre";
-      pdf.save(`recepisse_${nom}.pdf`);
+      pdf.save(`recapitulatif_${nom}.pdf`);
+
     } catch (error) {
       console.error("Erreur lors de la génération du PDF:", error);
     }
@@ -486,17 +638,23 @@ const ThankYou = () => {
               </p>
             </div>
 
-            {/* RÉCAP - zone capturée en PDF */}
+            {/* RÉCAP */}
             <div ref={recapRef} className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
               {/* En-tête du récépissé */}
               <div className="bg-primary/10 px-6 sm:px-8 py-6 border-b border-gray-200">
                 <div className="flex flex-col sm:flex-row items-center gap-6">
-                  {/* Photo */}
-                  <div className="w-28 h-32 bg-gray-100 rounded-xl flex items-center justify-center shrink-0 overflow-hidden border-2 border-white shadow">
+                  {/* Photo — cadre 3:4 avec object-cover pour éviter l'étirement */}
+                  <div className="w-28 h-[148px] bg-gray-100 rounded-xl shrink-0 overflow-hidden border-2 border-white shadow">
                     {photoUrl ? (
-                      <img src={photoUrl} alt="Photo" className="w-full h-full object-cover" />
+                      <img
+                        src={photoUrl}
+                        alt="Photo"
+                        className="w-full h-full object-cover object-center"
+                      />
                     ) : (
-                      <User className="w-12 h-12 text-gray-400" />
+                      <div className="w-full h-full flex items-center justify-center">
+                        <User className="w-12 h-12 text-gray-400" />
+                      </div>
                     )}
                   </div>
 
@@ -564,34 +722,17 @@ const ThankYou = () => {
 
             {/* Boutons d'action */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-              <Button
-                // variant="outline"
-                size="lg"
-                onClick={handleDownloadPDF}
-                className="gap-2"
-              >
+              <Button size="lg" onClick={handleDownloadPDF} className="gap-2">
                 <Download className="w-5 h-5" />
                 Télécharger en PDF
               </Button>
 
-              {/* {type === "membre" && createdId && ( */}
-                <Button asChild variant="outline" size="lg">
-                  <Link to={type === "membre" ? "/update-member" : "/update-child"} className="inline-flex items-center gap-2">
-                    <Edit className="w-5 h-5" />
-                    Modifier mes informations
-                  </Link>
-                </Button>
-              {/* )} */}
-
-              {/* <Button
-                size="lg"
-                onClick={handleNewRegistration}
-                asChild
-              >
-                <Link to={type === "membre" ? "/registration" : "/registration-children"} className="inline-flex items-center gap-2">
-                  Nouvelle inscription
+              <Button asChild variant="outline" size="lg">
+                <Link to={type === "membre" ? "/update-member" : "/update-child"} className="inline-flex items-center gap-2">
+                  <Edit className="w-5 h-5" />
+                  Modifier mes informations
                 </Link>
-              </Button> */}
+              </Button>
 
               <Button asChild variant="ghost" size="lg">
                 <Link to="/" className="inline-flex items-center gap-2">
@@ -605,11 +746,11 @@ const ThankYou = () => {
             <div className="text-center mt-8 space-y-2">
               <p className="text-sm text-muted-foreground">Besoin d'aide ?</p>
               <a
-                href="mailto:support.transfiguration@gmail.com"
+                href="https://wa.me/22509545893" target="_blank"
                 className="text-primary flex items-center justify-center gap-2 text-sm"
               >
-                <Mail className="w-4 h-4" />
-                support.transfiguration@gmail.com
+                <FaWhatsapp className="w-4 h-4" />
+                Ecrivez nous au 0709545893
               </a>
             </div>
           </>

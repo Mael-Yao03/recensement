@@ -416,7 +416,7 @@ export default function RegistrationForm() {
           </Card>
 
           {/* Conclusion - Last Step */}
-          {currentStep === steps.length - 1 && (
+          {/* {currentStep === steps.length - 1 && (
             <Card className="mt-6 border-0 shadow-lg overflow-hidden">
               <div className="bg-green-50 p-6 md:p-8">
                 <div className="flex gap-4">
@@ -434,7 +434,7 @@ export default function RegistrationForm() {
                 </div>
               </div>
             </Card>
-          )}
+          )} */}
         </div>
       </main>
     </div>
