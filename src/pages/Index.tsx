@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, ArrowRight, Sparkles, Zap, Shield, Rocket } from "lucide-react";
-import heroIllustration from "@/assets/forms.png";
+import { CheckCircle2, ArrowRight, Sparkles, FileText, Send, CheckIcon } from "lucide-react";
+import heroIllustration from "@/assets/3d-form.png";
 import Logo from "@/assets/trans.png";
+import { FaPlay } from "react-icons/fa6";
+import { MdEditDocument } from "react-icons/md";
+import { PiEyesBold } from "react-icons/pi";
+import { BsFillSendFill } from "react-icons/bs";
 
 const Index = () => {
   return (
@@ -34,7 +38,7 @@ const Index = () => {
                 </h1>
 
                 <p className="text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto">
-                  Bienvenue sur le portail de recensement de la Transfiguration !
+                  Bienvenue sur la plateforme de recensement de la Transfiguration. Enregistrez-vous en quelques minutes.
                 </p>
 
                 <div className="flex flex-wrap gap-4 pt-4 justify-center">
@@ -68,6 +72,92 @@ const Index = () => {
                   alt="Illustration moderne de confirmation"
                   className="relative z-10 w-full rounded-3xl "
                 />
+              </div>
+            </div>
+
+            {/* Section "Comment ça marche ?" */}
+            <div className="space-y-10 py-12">
+              <div className="text-center space-y-4 animate-slide-up">
+                <h2 className="text-3xl sm:text-5xl font-bold">
+                  <span className="text-primary">Comment ça marche ?</span>
+                </h2>
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Suivez ces étapes simples pour vous enregistrer et mettre à jour vos informations
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Étape 1 */}
+                <Card className="border-2 hover:border-primary transition-colors animate-scale-in" style={{ animationDelay: '0s' }}>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <FaPlay className="w-6 h-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">Étape 1</CardTitle>
+                    </div>
+                    <CardDescription>Commencer l'enregistrement</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Sélectionnez le type d'enregistrement : Membre ou ECODIM
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Étape 2 */}
+                <Card className="border-2 hover:border-primary transition-colors animate-scale-in" style={{ animationDelay: '0.1s' }}>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <MdEditDocument className="w-6 h-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">Étape 2</CardTitle>
+                    </div>
+                    <CardDescription>Remplir le formulaire</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Complétez vos informations personnelles de manière précise et détaillée
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Étape 3 */}
+                <Card className="border-2 hover:border-primary transition-colors animate-scale-in" style={{ animationDelay: '0.2s' }}>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <PiEyesBold className="w-6 h-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">Étape 3</CardTitle>
+                    </div>
+                    <CardDescription>Vérifier vos données</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Relisez et vérifiez toutes vos informations avant de soumettre
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Étape 4 */}
+                <Card className="border-2 hover:border-primary transition-colors animate-scale-in" style={{ animationDelay: '0.3s' }}>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <BsFillSendFill className="w-6 h-6 text-primary" />
+                      </div>
+                      <CardTitle className="text-xl">Étape 4</CardTitle>
+                    </div>
+                    <CardDescription>Soumettre</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Envoyez votre enregistrement et recevez une confirmation
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
